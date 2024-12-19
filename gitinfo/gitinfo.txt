@@ -45,8 +45,16 @@ Uusi projekti TLS-serverin testaamiseen.
 
 
 = = = = =
-/7/ (19.12.2024 9:28)
+/7/ (19.12.2024 17:00)
 
 +TCP\Server\tcp_server.exe
 
 Uusi projekti TCP-serverin testaamiseen.
+
+
+= = = = =
+/8/ (19.12.2024 17:00)
+
++TCP\Client\tcp_client.exe
+
+Uusi projekti TCP-clientin testaamiseen.
