@@ -49,17 +49,25 @@ TMemo* g_Memo {};
 
 class CListenerThread {
   public:
-    CListenerThread() {}
 
     void operator()(SOCKET m_Socket);
 
+    bool DataReceived() const
+        { return m_DataReceived; }
+
+    std::vector<char> Data() const
+        { return m_Data; }
+
   private:
-    SOCKET m_Socket { INVALID_SOCKET };
+    std::vector<char> m_Data {};
+    bool m_DataReceived {};
 };
 
 
 void CListenerThread::operator()(SOCKET m_Socket)
 {
+//    g_Memo->Lines->Add("CListenerThread");
+
     int recvbuflen = DEFAULT_BUFLEN;
     char recvbuf[DEFAULT_BUFLEN];
     int result = 0;
@@ -70,20 +78,26 @@ void CListenerThread::operator()(SOCKET m_Socket)
 
         if (result > 0)
         {
-            g_Memo->Lines->Add(AnsiString().sprintf("Bytes received: %d", result));
-            g_Memo->Lines->Add(recvbuf);
+            m_Data.clear();
+
+            m_DataReceived = true;
+            for (int i=0; i < result; ++i)
+                m_Data.push_back(recvbuf[i]);
+
+//            g_Memo->Lines->Add(AnsiString().sprintf("Bytes received: %d", result));
+//            g_Memo->Lines->Add(recvbuf);
         }
 
         else if (result == 0)
         {
-            g_Memo->Lines->Add("Connection closing...");
+//            g_Memo->Lines->Add("Connection closing...");
         }
 
         else
         {
-            char buf[64];
-            sprintf(buf, "recv failed: %d", WSAGetLastError());
-            g_Memo->Lines->Add(buf);
+//            char buf[64];
+//            sprintf(buf, "recv failed: %d", WSAGetLastError());
+//            g_Memo->Lines->Add(buf);
             return;
         }
 
@@ -239,7 +253,10 @@ bool CTcpServer::Accept()
     // Accept a client socket
     m_ClientSocket = accept(m_ListenSocket, nullptr, nullptr);
     if (m_ClientSocket != INVALID_SOCKET)
+    {
+        g_Memo->Lines->Add("accepted");
         return true;
+    }
 
     char buf[64];
     sprintf(buf, "accept failed: %d", WSAGetLastError());
@@ -249,10 +266,17 @@ bool CTcpServer::Accept()
 
 bool CTcpServer::Receive()
 {
-//    std::thread listener(CListenerThread(), m_ClientSocket);
-//
-//    listener.join();
-//    g_Memo->Lines->Add("joined");
+    g_Memo->Lines->Add("receiving");
+
+    std::thread listener(CListenerThread(), m_ClientSocket);
+
+    listener.
+
+    g_Memo->Lines->Add("join");
+    listener.join();
+    g_Memo->Lines->Add("join ended");
+
+    return true;
 
 
     char recvbuf[DEFAULT_BUFLEN];
