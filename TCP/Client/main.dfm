@@ -12,8 +12,8 @@ object formMain: TformMain
   Font.Style = []
   TextHeight = 15
   object butConnect: TButton
-    Left = 272
-    Top = 376
+    Left = 152
+    Top = 360
     Width = 75
     Height = 25
     Caption = 'Connect'
@@ -27,5 +27,14 @@ object formMain: TformMain
     Height = 305
     Align = alTop
     TabOrder = 1
+  end
+  object butSend: TButton
+    Left = 360
+    Top = 360
+    Width = 75
+    Height = 25
+    Caption = 'Send'
+    TabOrder = 2
+    OnClick = butSendClick
   end
 end

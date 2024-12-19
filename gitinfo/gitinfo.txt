@@ -58,3 +58,11 @@ Uusi projekti TCP-serverin testaamiseen.
 +TCP\Client\tcp_client.exe
 
 Uusi projekti TCP-clientin testaamiseen.
+
+
+= = = = =
+/9/ (19.12.2024 22:24)
+
++TCP\Client\tcp_client.exe
+
+Kehitystä.

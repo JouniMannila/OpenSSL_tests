@@ -182,6 +182,10 @@
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
     </PropertyGroup>
     <ItemGroup>
+        <CppCompile Include="Client.cpp">
+            <DependentOn>Client.h</DependentOn>
+            <BuildOrder>3</BuildOrder>
+        </CppCompile>
         <CppCompile Include="main.cpp">
             <Form>Form1</Form>
             <FormType>dfm</FormType>
@@ -278,7 +282,7 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployFile LocalName=".\Win64x\Debug\tcp_client.exe" Configuration="Debug" Class="ProjectOutput">
+                <DeployFile LocalName=".\tcp_client.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win64x">
                         <RemoteName>tcp_client.exe</RemoteName>
                         <Overwrite>true</Overwrite>
