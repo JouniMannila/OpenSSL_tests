@@ -36,3 +36,9 @@ Asioita eteenpäin.
 +YanHui\TLS Server\tls_server.exe
 
 Uusi projekti TLS-serverin testaamiseen.
+
+
+= = = = =
+/6/ (19.12.2024 9:28)
+
+#gitignore
