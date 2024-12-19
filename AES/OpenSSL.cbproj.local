@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899/12/30 00.00.00.000.707,C:\@SOFTWARE\TestProjects\OpenSSL\Unit1.h=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.h</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.470,=C:\@SOFTWARE\TestProjects\OpenSSL\libcrypto-3.a</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.246,C:\@SOFTWARE\TestProjects\OpenSSL\libcrypto-3.a=</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.637,=C:\@SOFTWARE\TestProjects\OpenSSL\libcrypto-3.a</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.978,=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.972,C:\@SOFTWARE\TestProjects\OpenSSL\Main.dfm=C:\@SOFTWARE\TestProjects\OpenSSL\Unit1.dfm</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.972,C:\@SOFTWARE\TestProjects\OpenSSL\Main.h=C:\@SOFTWARE\TestProjects\OpenSSL\Unit1.h</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.963,C:\@SOFTWARE\TestProjects\OpenSSL\Unit1.h=C:\@SOFTWARE\TestProjects\OpenSSL\OpenSSL_AES.h</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.963,C:\@SOFTWARE\TestProjects\OpenSSL\Unit1.cpp=C:\@SOFTWARE\TestProjects\OpenSSL\OpenSSL_AES.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.883,=C:\@SOFTWARE\TestProjects\OpenSSL\Unit1.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.707,C:\@SOFTWARE\TestProjects\OpenSSL\Unit1.cpp=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.707,C:\@SOFTWARE\TestProjects\OpenSSL\Unit1.dfm=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.dfm</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.690,C:\@SOFTWARE\TestProjects\OpenSSL\OpenSSLPCH1.h=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.972,C:\@SOFTWARE\TestProjects\OpenSSL\Main.cpp=C:\@SOFTWARE\TestProjects\OpenSSL\Unit1.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.718,C:\@SOFTWARE\TestProjects\OpenSSL\OpenSSL.cbproj=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Project1.cbproj</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.277,=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
+  </Transactions>
+</BorlandProject>
