@@ -20,3 +20,11 @@ Projekti TLS-clientin testaamiseen
 +OpenSSL_Official\TLS Client\tls_server.exe
 
 Projekti TLS-serverin testaamiseen
+
+
+= = = = =
+/4/ (19.12.2024 9:22)
+
++OpenSSL_Official\TLS Client\tls_server.exe
+
+Asioita eteenpäin.
