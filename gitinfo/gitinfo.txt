@@ -3,7 +3,7 @@
 
 +AES\OpenSSL.exe
 
-Projekti AES-256-salauksen testaamiseksi
+Projekti AES-256-salauksen testaamiseksi.
 
 
 = = = = =
@@ -11,7 +11,7 @@ Projekti AES-256-salauksen testaamiseksi
 
 +OpenSSL_Official\TLS Client\tls_client.exe
 
-Projekti TLS-clientin testaamiseen
+Projekti TLS-clientin testaamiseen.
 
 
 = = = = =
@@ -19,7 +19,7 @@ Projekti TLS-clientin testaamiseen
 
 +OpenSSL_Official\TLS Client\tls_server.exe
 
-Projekti TLS-serverin testaamiseen
+Projekti TLS-serverin testaamiseen.
 
 
 = = = = =
@@ -28,3 +28,11 @@ Projekti TLS-serverin testaamiseen
 +OpenSSL_Official\TLS Client\tls_server.exe
 
 Asioita eteenpäin.
+
+
+= = = = =
+/5/ (19.12.2024 9:26)
+
++YanHui\TLS Server\tls_server.exe
+
+Uusi projekti TLS-serverin testaamiseen.
