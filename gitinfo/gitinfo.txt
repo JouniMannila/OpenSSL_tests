@@ -4,3 +4,11 @@
 +AES\OpenSSL.exe
 
 Projekti AES-256-salauksen testaamiseksi
+
+
+= = = = =
+/2/ (19.12.2024 7:28)
+
++OpenSSL_Official\TLS Client\tls_client.exe
+
+Projekti TLS-clientin testaamiseen
