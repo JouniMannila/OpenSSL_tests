@@ -12,8 +12,8 @@ object formMain: TformMain
   Font.Style = []
   TextHeight = 15
   object butListen: TButton
-    Left = 272
-    Top = 384
+    Left = 184
+    Top = 368
     Width = 75
     Height = 25
     Caption = 'Listen'
@@ -27,5 +27,11 @@ object formMain: TformMain
     Height = 313
     Align = alTop
     TabOrder = 1
+  end
+  object Timer1: TTimer
+    Interval = 200
+    OnTimer = Timer1Timer
+    Left = 32
+    Top = 32
   end
 end
