@@ -36,6 +36,12 @@ __fastcall TformMain::TformMain(TComponent* Owner)
 }
 //---------------------------------------------------------------------------
 
+void __fastcall TformMain::FormShow(TObject *Sender)
+{
+    m_Server.SetPort(12300);
+}
+//---------------------------------------------------------------------------
+
 void __fastcall TformMain::butListenClick(TObject *Sender)
 {
     if (m_Listening)
@@ -45,32 +51,38 @@ void __fastcall TformMain::butListenClick(TObject *Sender)
 
     else
     {
-        if (!m_Server.Initialize(12300))
-        {
-            memo->Lines->Add(m_Server.GetLastError().c_str());
-            return;
-        }
-
         if (!m_Server.Connect())
         {
             memo->Lines->Add(m_Server.GetLastError().c_str());
             return;
         }
 
-        memo->Lines->Add("Listening...");
-
-        if (!m_Server.Accept())
-        {
-            memo->Lines->Add(m_Server.GetLastError().c_str());
-            return;
-        }
-
-        if (!m_Server.Receive())
-        {
-            if (m_Server.HasError())
-                memo->Lines->Add(m_Server.GetLastError().c_str());
-            return;
-        }
+//        if (!m_Server.Initialize())
+//        {
+//            memo->Lines->Add(m_Server.GetLastError().c_str());
+//            return;
+//        }
+//
+//        if (!m_Server.Listen())
+//        {
+//            memo->Lines->Add(m_Server.GetLastError().c_str());
+//            return;
+//        }
+//
+//        memo->Lines->Add("Listening...");
+//
+//        if (!m_Server.Accept())
+//        {
+//            memo->Lines->Add(m_Server.GetLastError().c_str());
+//            return;
+//        }
+//
+//        if (!m_Server.Receive())
+//        {
+//            if (m_Server.HasError())
+//                memo->Lines->Add(m_Server.GetLastError().c_str());
+//            return;
+//        }
 
         butListen->Caption = "Unlisten";
         m_Listening = true;
@@ -80,7 +92,7 @@ void __fastcall TformMain::butListenClick(TObject *Sender)
 
 void __fastcall TformMain::Timer1Timer(TObject *Sender)
 {
-    if (m_Listening && !m_Server.Receiving())
+    if (m_Listening && !m_Server.Connected())
     {
         m_Server.Cleanup();
         m_Listening = false;

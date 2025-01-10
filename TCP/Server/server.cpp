@@ -107,11 +107,13 @@ CTcpServer::~CTcpServer()
 }
 //----------------------------------------------------------------------------
 
-bool CTcpServer::Initialize(int port)
+bool CTcpServer::Initialize()
 {
+    if (m_PortNo == 0)
+        return false;
     if (!startup())
         return false;
-    return getAddrInfo(port);
+    return getAddrInfo(m_PortNo);
 }
 //----------------------------------------------------------------------------
 
@@ -170,7 +172,7 @@ bool CTcpServer::getAddrInfo(int port)
 }
 //----------------------------------------------------------------------------
 
-bool CTcpServer::Connect()
+bool CTcpServer::Listen()
 {
     // Create a SOCKET for the server to listen for client connections
     m_ListenSocket = socket(
@@ -232,15 +234,29 @@ bool CTcpServer::Receive()
         this, OnDataReceived, OnTerminated, OnError);
     m_ListenerThread->Execute();
 
-    m_Receiving = true;
+    m_Connected = true;
 
+    return true;
+}
+//----------------------------------------------------------------------------
+
+bool CTcpServer::Connect()
+{
+    if (!Initialize())
+        return false;
+    if (!Listen())
+        return false;
+    if (!Accept())
+        return false;
+    if (!Receive())
+        return false;
     return true;
 }
 //----------------------------------------------------------------------------
 
 void CTcpServer::Terminate()
 {
-    m_Receiving = false;
+    m_Connected = false;
 }
 //----------------------------------------------------------------------------
 

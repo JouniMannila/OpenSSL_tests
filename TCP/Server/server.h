@@ -39,6 +39,8 @@ using FThreadCallback = void(*)(void* This);
 //***************************************************************************
 
 /*!
+ Kantaluokka thredille. Ei suorita mit‰‰n j‰rkev‰‰ teht‰v‰‰. Se j‰‰ perivien
+ luokkien teht‰v‰ksi.
  */
 
 class CThread {
@@ -51,6 +53,7 @@ class CThread {
     bool Terminated() const
         { return m_Terminated; }
 
+    /// K‰ynnist‰‰ thread:in funktionaan Run().
     void Execute();
 
   private:
@@ -58,6 +61,7 @@ class CThread {
 
     bool m_Terminated { true };
 
+    /// Virtuaalinen thread-funktio, joka perivien luokkien t‰ytyy ajaa yli.
     virtual void Run() {}
 };
 
@@ -87,9 +91,11 @@ class CListenerThread : public CThread {
         m_ErrorCallback = error;
     }
 
+    ///
     bool DataReceived()
         { return std::exchange(m_DataReceived, false); }
 
+    ///
     std::vector<char> Data() const
         { return m_Data; }
 
@@ -104,6 +110,7 @@ class CListenerThread : public CThread {
     FThreadCallback m_TerminatedCallback {};
     FThreadCallback m_ErrorCallback {};
 
+    ///
     void Run() override;
 };
 
@@ -119,26 +126,37 @@ class CListenerThread : public CThread {
 
 class CTcpServer {
   public:
+    CTcpServer() = default;
+
     ~CTcpServer();
 
-    ///
-    bool Initialize(int port);
+    CTcpServer(const CTcpServer&) = delete;
+    CTcpServer(CTcpServer&&) = delete;
 
-    ///
+    void SetPort(int portNo)
+        { m_PortNo = portNo; }
+
+    /// WSAStartup + getaddrinfo
+    bool Initialize();
+
+    /// freeaddrinfo + closesocket + WSACleanup
     void Cleanup();
 
-    ///
+    /// socket + bind + listen
+    bool Listen();
+
+    /// accept
+    bool Accept();
+
+    /// luo listening thread:in
+    bool Receive();
+
+    /// Initialize() + Listen() + Accept()
     bool Connect();
 
     ///
-    bool Accept();
-
-    ///
-    bool Receive();
-
-    ///
-    bool Receiving() const
-        { return m_Receiving; }
+    bool Connected() const
+        { return m_Connected; }
 
     ///
     bool DataReceived()
@@ -157,6 +175,8 @@ class CTcpServer {
         { return m_LastError; }
 
   private:
+    int m_PortNo {};
+
     struct addrinfo* m_AddrInfo = nullptr;
 
     SOCKET m_ListenSocket { INVALID_SOCKET };
@@ -164,7 +184,7 @@ class CTcpServer {
 
     CListenerThread* m_ListenerThread {};
 
-    bool m_Receiving {};
+    bool m_Connected {};
 
     bool m_DataReceived {};
     std::vector<char> m_ReceivedData {};

@@ -10,6 +10,7 @@ object formMain: TformMain
   Font.Height = -12
   Font.Name = 'Segoe UI'
   Font.Style = []
+  OnShow = FormShow
   TextHeight = 15
   object butListen: TButton
     Left = 184

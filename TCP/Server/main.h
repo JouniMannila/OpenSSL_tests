@@ -37,6 +37,7 @@ __published:	// IDE-managed Components
   TTimer *Timer1;
   void __fastcall butListenClick(TObject *Sender);
   void __fastcall Timer1Timer(TObject *Sender);
+  void __fastcall FormShow(TObject *Sender);
 
 private:	// User declarations
   CTcpServer m_Server {};
