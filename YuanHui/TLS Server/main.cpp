@@ -95,7 +95,8 @@ void __fastcall TformMain::Button1Click(TObject *Sender)
 
     int listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-    if (listener == INVALID_SOCKET) {
+    if (listener == INVALID_SOCKET)
+    {
         char buf[128];
         sprintf(buf, "Error at socket(): %ld\n", WSAGetLastError());
         memo->Lines->Add(buf);
@@ -103,7 +104,8 @@ void __fastcall TformMain::Button1Click(TObject *Sender)
     }
 
     rc = bind(listener, (struct sockaddr*) &sin, sizeof(sin));
-    if ( rc < 0 ) {
+    if ( rc < 0 )
+    {
         char buf[128];
         sprintf(buf, "bind socket error, port number : <%d>, listener : %d\n", port_num, listener);
         memo->Lines->Add(buf);
@@ -111,7 +113,8 @@ void __fastcall TformMain::Button1Click(TObject *Sender)
     }
 
     rc = listen(listener, 16);
-    if ( rc < 0 ) {
+    if ( rc < 0 )
+    {
         char buf[128];
         sprintf(buf, "listen for connection error, listener : <%d>\n", listener);
         memo->Lines->Add(buf);
@@ -119,24 +122,28 @@ void __fastcall TformMain::Button1Click(TObject *Sender)
     }
 
     printf("SSL/TLS Echo Server started, port number : (%d)\n", port_num);
-    while(1) {
+    while(1)
+    {
         struct sockaddr_in addr;
         unsigned int len = sizeof(addr);
 
-        int fd =  accept(listener, nullptr, nullptr);
+        int fd = accept(listener, nullptr, nullptr);
 //        int fd =  accept(listener, (struct sockaddr*)&addr, &len);
-        if (fd < 0) {
+        if (fd < 0)
+        {
             perror("Unable to accept");
             exit(EXIT_FAILURE);
         }
 
         SSL *ssl = SSL_new(ctx);
         SSL_set_fd(ssl, fd);
-        if ( SSL_accept(ssl) <= 0 ) {
+        if ( SSL_accept(ssl) <= 0 )
+        {
             printf("Unable to accept SSL handshake\n");
         }
 
-        for ( ;; ) {
+        for ( ;; )
+        {
             memset(msg_buf, '\0', BUFFER_SIZE);
             // ssize_t n_recvd = recv(fd, msg_buf, BUFFER_SIZE, 0);
             int n_recvd = SSL_read(ssl, msg_buf, BUFFER_SIZE);
@@ -158,3 +165,4 @@ void __fastcall TformMain::Button1Click(TObject *Sender)
     SSL_CTX_free(ctx);
 }
 //---------------------------------------------------------------------------
+

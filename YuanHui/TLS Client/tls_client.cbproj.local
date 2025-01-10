@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899/12/30 00.00.00.000.772,=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.140,=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
+    <Transaction>2025/01/08 11.05.12.719,=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>2025/01/08 11.05.12.803,=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
+    <Transaction>2025/01/08 11.05.32.647,C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\tls_clientPCH1.h=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>2025/01/08 11.05.32.661,C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\Unit1.h=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.h</Transaction>
+    <Transaction>2025/01/08 11.05.32.661,C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\Unit1.cpp=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
+    <Transaction>2025/01/08 11.05.32.661,C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\Unit1.dfm=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.dfm</Transaction>
+    <Transaction>2025/01/08 11.05.32.672,C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\tls_client.cbproj=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Project1.cbproj</Transaction>
+    <Transaction>2025/01/08 11.05.36.023,C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\main.h=C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\Unit1.h</Transaction>
+    <Transaction>2025/01/08 11.05.36.023,C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\main.dfm=C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\Unit1.dfm</Transaction>
+    <Transaction>2025/01/08 11.05.36.023,C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\main.cpp=C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\Unit1.cpp</Transaction>
+  </Transactions>
+</BorlandProject>
