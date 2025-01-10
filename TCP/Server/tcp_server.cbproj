@@ -188,6 +188,10 @@
             <DependentOn>main.h</DependentOn>
             <BuildOrder>2</BuildOrder>
         </CppCompile>
+        <CppCompile Include="server.cpp">
+            <DependentOn>server.h</DependentOn>
+            <BuildOrder>3</BuildOrder>
+        </CppCompile>
         <CppCompile Include="tcp_server.cpp">
             <BuildOrder>0</BuildOrder>
         </CppCompile>
@@ -278,7 +282,7 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployFile LocalName=".\Win64x\Debug\tcp_server.exe" Configuration="Debug" Class="ProjectOutput">
+                <DeployFile LocalName=".\tcp_server.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win64x">
                         <RemoteName>tcp_server.exe</RemoteName>
                         <Overwrite>true</Overwrite>
