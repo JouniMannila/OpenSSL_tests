@@ -22,7 +22,7 @@
 
 #pragma package(smart_init)
 
-#define DEFAULT_PORT "27015"
+#define DEFAULT_PORT "12300"
 #define DEFAULT_BUFLEN 512
 
 #define IP_ADDR "127.0.0.1"
@@ -128,11 +128,11 @@ bool CTcpClient::Connect()
     // But for this simple example we just free the resources
     // returned by getaddrinfo and print an error message
 
-//    if (m_Socket == INVALID_SOCKET)
-//    {
-//        m_LastError = "Invalid socket";
-//        return false;
-//    }
+    if (m_Socket == INVALID_SOCKET)
+    {
+        m_LastError = "Invalid socket";
+        return false;
+    }
 
     return true;
 }

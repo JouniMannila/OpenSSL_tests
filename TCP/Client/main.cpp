@@ -56,6 +56,8 @@ void __fastcall TformMain::Connect()
         return;
     }
 
+    memo->Lines->Add("Connected");
+    butConnect->Caption = "Disconnect";
     m_Connected = true;
 }
 //----------------------------------------------------------------------------
@@ -70,6 +72,8 @@ void __fastcall TformMain::Disconnect()
         return;
     }
 
+    memo->Lines->Add("Disconnected");
+    butConnect->Caption = "Connect";
     m_Connected = false;
 }
 //----------------------------------------------------------------------------
