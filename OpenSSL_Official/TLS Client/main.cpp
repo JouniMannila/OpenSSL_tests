@@ -39,7 +39,7 @@ const char *request_start = "GET / HTTP/1.0\r\nConnection: close\r\nHost: ";
 const char *request_end = "\r\n\r\n";
 size_t written, readbytes;
 char buf[160];
-char *hostname, *port;
+//char *hostname, *port;
 int argnext = 1;
 int ipv6 = 0;
 
@@ -215,6 +215,7 @@ bool COpenSSL_TLSClient_2::DoStuff()
      * really know what you are doing.
      */
     SSL_CTX_set_verify(m_CTX, SSL_VERIFY_PEER, nullptr);
+//    SSL_CTX_set_verify(m_CTX, SSL_VERIFY_NONE, nullptr);
 
     /* Use the default trusted certificate store */
     if (!SSL_CTX_set_default_verify_paths(m_CTX))
@@ -283,7 +284,8 @@ bool COpenSSL_TLSClient_2::DoStuff()
     if (!SSL_write_ex(m_SSL, request_start, strlen(request_start), &written))
         return HandleFailure("Failed to write start of HTTP request");
 
-    if (!SSL_write_ex(m_SSL, hostname, strlen(hostname), &written))
+    if (!SSL_write_ex(m_SSL, m_Host.c_str(), m_Host.length(), &written))
+//    if (!SSL_write_ex(m_SSL, hostname, strlen(hostname), &written))
         return HandleFailure("Failed to write hostname in HTTP request");
 
     if (!SSL_write_ex(m_SSL, request_end, strlen(request_end), &written))
@@ -474,7 +476,8 @@ bool COpenSSL_TLSClient::MakeConfigs()
 
 bool COpenSSL_TLSClient::VerifyLocations()
 {
-    int res = SSL_CTX_load_verify_locations(m_CTX, "yonem.pem", nullptr);
+    int res = SSL_CTX_load_verify_locations(m_CTX, "y.pem", nullptr);
+//    int res = SSL_CTX_load_verify_locations(m_CTX, "yonem.pem", nullptr);
     if (res != 1)
         return HandleFailure();
     return true;
@@ -549,7 +552,8 @@ void __fastcall TformMain::Button1Click(TObject *Sender)
 {
     COpenSSL_TLSClient_2 tls;
     tls.SetHost("localhost");
-    tls.SetPort("443");
+    tls.SetPort("12350");
+//    tls.SetPort("443");
     tls.DoStuff();
 }
 //---------------------------------------------------------------------------
