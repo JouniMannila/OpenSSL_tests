@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899/12/30 00.00.00.000.718,C:\@SOFTWARE\TestProjects\OpenSSL\Copilot\Client\tls_clientPCH1.h=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.728,C:\@SOFTWARE\TestProjects\OpenSSL\Copilot\Client\File1.cpp=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\File1.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.772,=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.916,=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.746,C:\@SOFTWARE\TestProjects\OpenSSL\Copilot\Client\tls_client.cbproj=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Project1.cbproj</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.019,=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\File1.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.072,C:\@SOFTWARE\TestProjects\OpenSSL\Copilot\Client\main.cpp=C:\@SOFTWARE\TestProjects\OpenSSL\Copilot\Client\File1.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.028,=C:\@SOFTWARE\TestProjects\OpenSSL\Copilot\Client\libssl.lib</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.140,=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.024,=C:\@SOFTWARE\TestProjects\OpenSSL\Copilot\Client\libcrypto.lib</Transaction>
+  </Transactions>
+</BorlandProject>
