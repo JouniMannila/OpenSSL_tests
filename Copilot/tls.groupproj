@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{FB43F1C6-06E6-451F-B0BB-585EFDC6341D}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Client\tls_client.cbproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Server\tls_server.cbproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="tls_client">
+        <MSBuild Projects="Client\tls_client.cbproj"/>
+    </Target>
+    <Target Name="tls_client:Clean">
+        <MSBuild Projects="Client\tls_client.cbproj" Targets="Clean"/>
+    </Target>
+    <Target Name="tls_client:Make">
+        <MSBuild Projects="Client\tls_client.cbproj" Targets="Make"/>
+    </Target>
+    <Target Name="tls_server">
+        <MSBuild Projects="Server\tls_server.cbproj"/>
+    </Target>
+    <Target Name="tls_server:Clean">
+        <MSBuild Projects="Server\tls_server.cbproj" Targets="Clean"/>
+    </Target>
+    <Target Name="tls_server:Make">
+        <MSBuild Projects="Server\tls_server.cbproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="tls_client;tls_server"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="tls_client:Clean;tls_server:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="tls_client:Make;tls_server:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

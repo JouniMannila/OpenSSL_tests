@@ -1,0 +1,13 @@
+Polku:
+
+C:\Program Files\OpenSSL-Win64\bin
+
+
+Copilotin ohjeita:
+
+
+"C:\Program Files\OpenSSL-Win64\bin\openssl" genrsa -out privatekey.pem 2048
+
+"C:\Program Files\OpenSSL-Win64\bin\openssl" req -new -key privatekey.pem -out csr.pem
+
+"C:\Program Files\OpenSSL-Win64\bin\openssl" x509 -req -days 365 -in csr.pem -signkey privatekey.pem -out certificate.pem

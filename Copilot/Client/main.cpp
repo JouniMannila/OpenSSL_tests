@@ -1,4 +1,4 @@
-//----------------------------------------------------------------------------
+Ôªø//----------------------------------------------------------------------------
 //
 // Module: main
 // Author: J.Mannila
@@ -12,14 +12,29 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <winsock2.h>
-
 #include <ws2tcpip.h>
+
+#include <conio.h>
 //----------------------------------------------------------------------------
 
 //#pragma comment(lib, "ws2_32.lib")
 //#pragma comment(lib, "libssl.lib")
 //#pragma comment(lib, "libcrypto.lib")
 
+
+std::string getOpenSSLError()
+{
+    BIO *bio = BIO_new(BIO_s_mem());
+    ERR_print_errors(bio);
+
+    char *buf;
+    size_t len = BIO_get_mem_data(bio, &buf);
+    std::string s(buf, len);
+
+    BIO_free(bio);
+    return s;
+}
+//----------------------------------------------------------------------------
 
 #define NEW
 
@@ -49,11 +64,11 @@ class CTcpClient {
     /// Kutsuu WSAStartup.
     bool Initialize();
 
-    /// Luo TCP-socket:in ja yritt‰‰ kytkeyty‰ serveriin. Luodun Socket:in
+    /// Luo TCP-socket:in ja yritt√§√§ kytkeyty√§ serveriin. Luodun Socket:in
     /// arvo tallettuu m_ServerSocket:iin.
     bool Connect();
 
-    /// Palautaa edelliseen virheeseen liittyv‰n tekstin.
+    /// Palautaa edelliseen virheeseen liittyv√§n tekstin.
     std::string GetLastError() const
         { return m_LastError; }
 
@@ -105,7 +120,7 @@ bool CTcpClient::Connect()
     addr.sin_port = htons(m_PortNo);
     addr.sin_addr.s_addr = inet_addr(m_Address.c_str());
 
-    // yritet‰‰n kytkeyty‰
+    // yritet√§√§n kytkeyty√§
     if (connect(m_ServerSocket, (struct sockaddr*)&addr, sizeof(addr)) < 0)
         return SetLastError("ERROR: Unable to connect.");
 
@@ -144,7 +159,16 @@ class COpenSSL_Client {
     bool CreateSSL(int serverSocket);
 
     ///
+    bool DisplayCerts();
+
+    ///
     bool Connect();
+
+    ///
+    bool LoadVerifyLocations();
+
+    ///
+    bool VerifyCertification();
 
     ///
     void Write(std::string_view message);
@@ -152,7 +176,7 @@ class COpenSSL_Client {
     ///
     bool Read(std::string& message);
 
-    /// Palautaa edelliseen virheeseen liittyv‰n tekstin.
+    /// Palautaa edelliseen virheeseen liittyv√§n tekstin.
     std::string GetLastError() const
         { return m_LastError; }
 
@@ -216,10 +240,52 @@ bool COpenSSL_Client::CreateSSL(int fd)
 }
 //----------------------------------------------------------------------------
 
+bool COpenSSL_Client::DisplayCerts()
+{
+     X509* cert = SSL_get_peer_certificate(m_SSL);
+     if (!cert)
+        return false;
+
+     char* line = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
+
+     return true;
+}
+//----------------------------------------------------------------------------
+
 bool COpenSSL_Client::Connect()
 {
     if (SSL_connect(m_SSL) <= 0)
+    {
+        std::string s = ERR_error_string(ERR_get_error(), nullptr);
         return SetLastError("ERROR: SSL_connect failed.");
+    }
+    return true;
+}
+//----------------------------------------------------------------------------
+
+bool COpenSSL_Client::LoadVerifyLocations()
+{
+    int res = SSL_CTX_load_verify_locations(m_CTX, "csr.pem", nullptr);
+    if (res != 1)
+    {
+        std::string s = getOpenSSLError();
+        return SetLastError(s);//"ERROR: SSL_CTX_load_verify_locations failed.");
+    }
+    return true;
+}
+//----------------------------------------------------------------------------
+
+bool COpenSSL_Client::VerifyCertification()
+{
+    SSL_CTX_set_verify(m_CTX, SSL_VERIFY_PEER, nullptr);
+//    SSL_CTX_set_verify(m_CTX, SSL_VERIFY_NONE, nullptr);
+
+    int res = SSL_get_verify_result(m_SSL);
+    if (res != X509_V_OK)
+    {
+        std::string s = ERR_error_string(ERR_get_error(), nullptr);
+        return SetLastError("ERROR: SSL_CTX_set_verify failed");
+    }
     return true;
 }
 //----------------------------------------------------------------------------
@@ -297,6 +363,10 @@ int main()
     CTcpClient tcpClient;
     COpenSSL_Client sslClient;
 
+//    lantronix
+//    tcpClient.SetPortNo(10001);
+//    tcpClient.SetAddress("172.20.221.88");
+
     tcpClient.SetPortNo(12350);
     tcpClient.SetAddress("127.0.0.1");
 
@@ -329,6 +399,24 @@ int main()
     if (!sslClient.Connect())
     {
         std::cout << sslClient.GetLastError() << std::endl;
+        getch();
+        return 0;
+    }
+
+    if (!sslClient.LoadVerifyLocations())
+    {
+        std::cout << sslClient.GetLastError() << std::endl;
+        getch();
+        return 0;
+    }
+
+//    if (!sslClient.DisplayCerts())
+//        return 0;
+//
+    if (!sslClient.VerifyCertification())
+    {
+        std::cout << sslClient.GetLastError() << std::endl;
+        getch();
         return 0;
     }
 
@@ -389,6 +477,8 @@ int main()
     cleanup_openssl();
     cleanup_winsock();
   #endif
+
+    getch();
 
     return 0;
 }

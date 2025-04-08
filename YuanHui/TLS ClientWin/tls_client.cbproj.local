@@ -1,19 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
 	<Transactions>
+    <Transaction>1899/12/30 00.00.00.000.023,C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\Unit1.cpp=C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\main.cpp</Transaction>
     <Transaction>1899/12/30 00.00.00.000.849,=C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS ClientWin\libcrypto.lib</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.023,C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\main.cpp=C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\Unit1.cpp</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.661,C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\Unit1.h=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.h</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.661,C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\Unit1.cpp=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.661,C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.h=C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\Unit1.h</Transaction>
     <Transaction>1899/12/30 00.00.00.000.772,=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.719,=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
     <Transaction>1899/12/30 00.00.00.000.857,=C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS ClientWin\libssl.lib</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.647,C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Project1PCH1.h=C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\tls_clientPCH1.h</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.719,=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.661,C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.cpp=C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\Unit1.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.661,C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.dfm=C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\Unit1.dfm</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.023,C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\Unit1.dfm=C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\main.dfm</Transaction>
     <Transaction>1899/12/30 00.00.00.000.140,=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.661,C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\Unit1.dfm=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.dfm</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.672,C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\tls_client.cbproj=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Project1.cbproj</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.023,C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\Unit1.h=C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\main.h</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.672,C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Project1.cbproj=C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\tls_client.cbproj</Transaction>
     <Transaction>1899/12/30 00.00.00.000.803,=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.647,C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\tls_clientPCH1.h=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.023,C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\main.dfm=C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\Unit1.dfm</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.023,C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\main.h=C:\@SOFTWARE\TestProjects\OpenSSL\YuanHui\TLS Client\Unit1.h</Transaction>
   </Transactions>
 </BorlandProject>

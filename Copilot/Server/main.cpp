@@ -1,4 +1,4 @@
-//----------------------------------------------------------------------------
+ï»¿//----------------------------------------------------------------------------
 //
 // Module: main
 // Author: J.Mannila
@@ -17,6 +17,9 @@
 #pragma comment(lib, "ws2_32.lib")
 //#pragma comment(lib, "libssl.lib")
 //#pragma comment(lib, "libcrypto.lib")
+
+#define SHOWFUNC(class)  std::cout << class << "::" << __FUNC__ << std::endl;
+#define SHOW(text)  std::cout << text << std::endl;
 
 #define NEW
 
@@ -63,14 +66,14 @@ class CTcpServer {
     /// Kutsuu WSAStartup.
     bool Initialize();
 
-    /// Luo TCP-socket:in ja yrittää kytkeytyä serveriin. Luodun Socket:in
+    /// Luo TCP-socket:in ja yrittÃ¤Ã¤ kytkeytyÃ¤ serveriin. Luodun Socket:in
     /// arvo tallettuu m_ServerSocket:iin.
     bool Connect();
 
     ///
     bool Accept();
 
-    /// Palautaa edelliseen virheeseen liittyvän tekstin.
+    /// Palautaa edelliseen virheeseen liittyvÃ¤n tekstin.
     std::string GetLastError() const
         { return m_LastError; }
 
@@ -89,6 +92,8 @@ class CTcpServer {
 
 CTcpServer::~CTcpServer()
 {
+    SHOWFUNC("CTcpServer")
+
     if (m_ServerSocket)
         closesocket(m_ServerSocket);
     WSACleanup();
@@ -97,6 +102,8 @@ CTcpServer::~CTcpServer()
 
 bool CTcpServer::Initialize()
 {
+    SHOWFUNC("CTcpServer")
+
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
         return SetLastError("ERROR: WSAStartup failed.");
@@ -106,6 +113,8 @@ bool CTcpServer::Initialize()
 
 bool CTcpServer::Connect()
 {
+    SHOWFUNC("CTcpServer")
+
     if (m_PortNo == 0)
         return SetLastError("ERROR: Port == 0.");
 
@@ -131,6 +140,8 @@ bool CTcpServer::Connect()
 
 bool CTcpServer::Accept()
 {
+    SHOWFUNC("CTcpServer")
+
     struct sockaddr_in addr;
     int len = sizeof(addr);
 
@@ -144,6 +155,8 @@ bool CTcpServer::Accept()
 
 bool CTcpServer::SetLastError(std::string_view msg)
 {
+    SHOWFUNC("CTcpServer")
+
     m_LastError = msg;
     return false;
 }
@@ -184,7 +197,7 @@ class COpenSSL_Server {
     SSL* GetSSL() const
         { return m_SSL; }
 
-    /// Palautaa edelliseen virheeseen liittyvän tekstin.
+    /// Palautaa edelliseen virheeseen liittyvÃ¤n tekstin.
     std::string GetLastError() const
         { return m_LastError; }
 
@@ -201,10 +214,15 @@ class COpenSSL_Server {
 
 COpenSSL_Server::~COpenSSL_Server()
 {
+    SHOWFUNC("COpenSSL_Server")
+
     if (m_SSL)
     {
+        SHOW("  - SSL_shutdown")
         SSL_shutdown(m_SSL);
+        SHOW("  - SSL_free")
         SSL_free(m_SSL);
+        SHOW("  - SSL_CTX_free")
         SSL_CTX_free(m_CTX);
     }
     EVP_cleanup();
@@ -213,21 +231,29 @@ COpenSSL_Server::~COpenSSL_Server()
 
 void COpenSSL_Server::Initialize()
 {
+    SHOWFUNC("COpenSSL_Server")
+
+    SHOW("  - SSL_load_error_strings")
     SSL_load_error_strings();
+    SHOW("  - OpenSSL_add_ssl_algorithms")
     OpenSSL_add_ssl_algorithms();
 }
 //----------------------------------------------------------------------------
 
 bool COpenSSL_Server::CreateContext()
 {
-    m_CTX = SSL_CTX_new(TLS_server_method());
+    SHOWFUNC("COpenSSL_Server")
 
+    SHOW("  - TLS_server_method")
+    m_CTX = SSL_CTX_new(TLS_server_method());
     if (!m_CTX)
         return SetLastError(getOpenSSLError());
 
+    SHOW("  - SSL_CTX_set_min_proto_version")
     if (SSL_CTX_set_min_proto_version(m_CTX, TLS1_VERSION) == 0)
         return SetLastError(getOpenSSLError());
 
+    SHOW("  - SSL_CTX_set_max_proto_version")
     if (SSL_CTX_set_max_proto_version(m_CTX, TLS1_2_VERSION) == 0)
         return SetLastError(getOpenSSLError());
 
@@ -237,13 +263,18 @@ bool COpenSSL_Server::CreateContext()
 
 bool COpenSSL_Server::ConfigureContext()
 {
+    SHOWFUNC("COpenSSL_Server")
+
+    SHOW("  - SSL_CTX_set_ecdh_auto")
     SSL_CTX_set_ecdh_auto(m_CTX, 1);
 
     // Set the key and cert
-    if (SSL_CTX_use_certificate_file(m_CTX, "y.pem", SSL_FILETYPE_PEM) <= 0)
+    SHOW("  - SSL_CTX_use_certificate_file")
+    if (SSL_CTX_use_certificate_file(m_CTX, "certificate.pem", SSL_FILETYPE_PEM) <= 0)
         return SetLastError(getOpenSSLError());
 
-    if (SSL_CTX_use_PrivateKey_file(m_CTX, "y.key", SSL_FILETYPE_PEM) <= 0)
+    SHOW("  - SSL_CTX_use_PrivateKey_file")
+    if (SSL_CTX_use_PrivateKey_file(m_CTX, "privatekey.pem", SSL_FILETYPE_PEM) <= 0)
         return SetLastError(getOpenSSLError());
 
     return true;
@@ -252,7 +283,10 @@ bool COpenSSL_Server::ConfigureContext()
 
 bool COpenSSL_Server::CreateSSL(int fd)
 {
+    SHOWFUNC("COpenSSL_Server")
+
     m_SSL = SSL_new(m_CTX);
+    SHOW("  - SSL_set_fd")
     if (SSL_set_fd(m_SSL, fd) == 0)
         return SetLastError("ERROR: SSL_set_fd failed.");
     return true;
@@ -261,6 +295,9 @@ bool COpenSSL_Server::CreateSSL(int fd)
 
 bool COpenSSL_Server::Accept()
 {
+    SHOWFUNC("COpenSSL_Server")
+
+    SHOW("  - SSL_accept")
     if (SSL_accept(m_SSL) <= 0)
         return SetLastError("ERROR: SSL_accept failed.");
     return true;
@@ -269,6 +306,9 @@ bool COpenSSL_Server::Accept()
 
 bool COpenSSL_Server::Write(std::string_view msg)
 {
+    SHOWFUNC("COpenSSL_Server")
+
+    SHOW("  - SSL_write")
     if (SSL_write(m_SSL, msg.data(), msg.size()) == 0)
         return SetLastError("ERROR: SSL_accept failed.");
     return true;
@@ -277,6 +317,8 @@ bool COpenSSL_Server::Write(std::string_view msg)
 
 bool COpenSSL_Server::SetLastError(std::string_view msg)
 {
+    SHOWFUNC("COpenSSL_Server")
+
     m_LastError = msg;
     return false;
 }
@@ -340,12 +382,12 @@ void configure_context(SSL_CTX* ctx) {
     SSL_CTX_set_ecdh_auto(ctx, 1);
 
     // Set the key and cert
-    if (SSL_CTX_use_certificate_file(ctx, "y.pem", SSL_FILETYPE_PEM) <= 0) {
+    if (SSL_CTX_use_certificate_file(ctx, "csr.pem", SSL_FILETYPE_PEM) <= 0) {
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }
 
-    if (SSL_CTX_use_PrivateKey_file(ctx, "y.key", SSL_FILETYPE_PEM) <= 0) {
+    if (SSL_CTX_use_PrivateKey_file(ctx, "privatekey.pem", SSL_FILETYPE_PEM) <= 0) {
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }

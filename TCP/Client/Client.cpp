@@ -22,10 +22,12 @@
 
 #pragma package(smart_init)
 
-#define DEFAULT_PORT "12300"
+#define DEFAULT_PORT "10001"
+//#define DEFAULT_PORT "12300"
 #define DEFAULT_BUFLEN 512
 
-#define IP_ADDR "127.0.0.1"
+//#define IP_ADDR "127.0.0.1"
+#define IP_ADDR "172.20.221.88"
 
 TMemo* g_Memo;
 
