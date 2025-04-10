@@ -143,7 +143,7 @@ class COpenSSL_Client {
     bool MakeConnection(CTcpClient&);
 
     ///
-    void Write(std::string_view message);
+    bool Write(std::string_view message);
 
     ///
     bool Read(std::string& message);
@@ -156,7 +156,7 @@ class COpenSSL_Client {
     SSL_CTX* m_CTX {};
     SSL* m_SSL {};
 
-    int m_TLS_MinVersion { TLS1_2_VERSION };
+    int m_TLS_MinVersion { TLS1_VERSION };
     int m_TLS_MaxVersion { TLS1_2_VERSION };
 
     std::string m_Certificate {};

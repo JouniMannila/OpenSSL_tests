@@ -13,8 +13,8 @@
     <Transaction>1899/12/30 00.00.00.000.421,C:\SOFTWARE\Tests\OpenSSL\TCP\Client\Client.h=C:\SOFTWARE\Tests\OpenSSL\TCP\Client\Unit1.h</Transaction>
     <Transaction>1899/12/30 00.00.00.000.287,C:\@SOFTWARE\TestProjects\OpenSSL\TCP\Client\Unit1.cpp=C:\@SOFTWARE\TestProjects\OpenSSL\TCP\Client\main.cpp</Transaction>
     <Transaction>1899/12/30 00.00.00.000.637,C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.dfm=C:\@SOFTWARE\TestProjects\OpenSSL\TCP\Client\Unit1.dfm</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.140,=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.637,C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.cpp=C:\@SOFTWARE\TestProjects\OpenSSL\TCP\Client\Unit1.cpp</Transaction>
     <Transaction>1899/12/30 00.00.00.000.621,=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.637,C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.cpp=C:\@SOFTWARE\TestProjects\OpenSSL\TCP\Client\Unit1.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.140,=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
   </Transactions>
 </BorlandProject>

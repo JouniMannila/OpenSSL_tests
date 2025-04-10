@@ -263,9 +263,14 @@ bool COpenSSL_Client::Connect()
     SHOWFUNC("COpenSSL_Client")
 
     SHOW("  - SSL_connect")
-    if (SSL_connect(m_SSL) <= 0)
-        return SetLastError("SSL_connect failed.");
-    return true;
+    int ret = SSL_connect(m_SSL);
+    if (ret > 0)
+        return true;
+
+    std::string s1 = CSSL_GetError::Reason(m_SSL, ret);
+    s1 += "\n";
+    s1 += getOpenSSLError();
+    return SetLastError("SSL_connect failed.", s1);
 }
 //----------------------------------------------------------------------------
 
@@ -299,12 +304,20 @@ bool COpenSSL_Client::VerifyCertification()
 }
 //----------------------------------------------------------------------------
 
-void COpenSSL_Client::Write(std::string_view message)
+bool COpenSSL_Client::Write(std::string_view message)
 {
     SHOWFUNC("COpenSSL_Client")
 
     SHOW("  - SSL_write")
-    SSL_write(m_SSL, message.data(), message.size());
+    int ret = SSL_write(m_SSL, message.data(), message.size());
+    if (ret > 0)
+        return true;
+
+    std::string s = CSSL_GetError::Reason(m_SSL, ret);
+    if (!s.empty())
+        return SetLastError("SSL_write failed.", s);
+    else
+        return SetLastError("SSL_write failed.");
 }
 //----------------------------------------------------------------------------
 
@@ -334,3 +347,4 @@ bool COpenSSL_Client::SetLastError(
 //----------------------------------------------------------------------------
 
 }
+
