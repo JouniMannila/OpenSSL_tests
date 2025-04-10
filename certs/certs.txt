@@ -1,0 +1,9 @@
+openssl genrsa -out hedsam.key 2048
+
+openssl rsa -in hedsam.key -pubout -out hedsam_public.key
+
+openssl req -new -key hedsam.key -out hedsam.csr
+
+openssl req -text -in hedsam.csr -noout -verify
+
+openssl x509 -in hedsam.csr -out hedsam.crt -req -signkey hedsam.key -days 3560

@@ -74,3 +74,9 @@ Kehitystä.
 +TCP\Server\tcp_server.exe
 
 Kehitystä.
+
+
+= = = = =
+/11/ (10.4.2025 6:36)
+
+Kehitystä laajalla alueella.
