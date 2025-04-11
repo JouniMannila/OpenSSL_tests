@@ -52,13 +52,14 @@ CTcpClient::~CTcpClient()
 {
     SHOWFUNC("CTcpClient")
 
-    if (m_ServerSocket)
-    {
-        SHOW("  - closesocket")
-        closesocket(m_ServerSocket);
-    }
-    SHOW("  - WSACleanup")
-    WSACleanup();
+    Disconnect();
+//    if (m_ServerSocket)
+//    {
+//        SHOW("  - closesocket")
+//        closesocket(m_ServerSocket);
+//    }
+//    SHOW("  - WSACleanup")
+//    WSACleanup();
 }
 //----------------------------------------------------------------------------
 
@@ -113,6 +114,19 @@ bool CTcpClient::DoConnect()
         return SetLastError("Unable to connect.");
 
     return true;
+}
+//----------------------------------------------------------------------------
+
+void CTcpClient::Disconnect()
+{
+    if (m_ServerSocket)
+    {
+        SHOW("  - closesocket")
+        closesocket(m_ServerSocket);
+        m_ServerSocket = 0;
+    }
+    SHOW("  - WSACleanup")
+    WSACleanup();
 }
 //----------------------------------------------------------------------------
 

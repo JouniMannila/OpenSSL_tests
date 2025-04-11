@@ -74,6 +74,8 @@ __fastcall TformMain::TformMain(TComponent* Owner)
 
 __fastcall TformMain::~TformMain()
 {
+    Disconnect();
+
     delete m_ServerThread;
     delete m_TcpServer;
     delete m_SslServer;
@@ -123,6 +125,8 @@ void __fastcall TformMain::timerTimer(TObject *Sender)
 
 bool __fastcall TformMain::Connect()
 {
+    memo->Lines->Add("### Connect");
+
     m_TcpServer->Initialize();
     m_SslServer->Initialize();
 
@@ -156,7 +160,15 @@ bool __fastcall TformMain::Connect()
 
 void __fastcall TformMain::Disconnect()
 {
+    if (!m_Connected)
+        return;
+
+    memo->Lines->Add("### Disconnect");
+
     timer->Enabled = false;
+
+    //
+    m_TcpServer->Shutdown();
 
     // terminoidaan thread
     if (m_ServerThread)
@@ -170,6 +182,9 @@ void __fastcall TformMain::Disconnect()
         m_ServerThread = nullptr;
     }
 
+    if (!m_SslServer->Shutdown())
+        ShowError(m_SslServer->GetLastError());
+
     m_Connected = false;
     butConnect->Caption = "Connect";
 }
@@ -178,6 +193,7 @@ void __fastcall TformMain::Disconnect()
 bool __fastcall TformMain::ShowError(const ztls::CError& error)
 {
     memo->Lines->Add(error.Caption.c_str());
+    memo->Lines->Add(error.Message.c_str());
     return false;
 }
 //----------------------------------------------------------------------------

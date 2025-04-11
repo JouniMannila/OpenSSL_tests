@@ -209,6 +209,10 @@
             <BuildOrder>1</BuildOrder>
             <PCH>true</PCH>
         </PCHCompile>
+        <CppCompile Include="..\Common\CriticalSection.cpp">
+            <DependentOn>..\Common\CriticalSection.h</DependentOn>
+            <BuildOrder>7</BuildOrder>
+        </CppCompile>
         <CppCompile Include="..\Common\Error.cpp">
             <DependentOn>..\Common\Error.h</DependentOn>
             <BuildOrder>5</BuildOrder>

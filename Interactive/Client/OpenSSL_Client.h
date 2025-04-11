@@ -56,6 +56,9 @@ class CTcpClient {
     ///
     bool Connect();
 
+    ///
+    void Disconnect();
+
     /// Palautaa edelliseen virheeseen liittyvän tekstin.
     CError GetLastError() const
         { return m_LastError; }

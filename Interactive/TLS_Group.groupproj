@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{B70EB289-4EA0-4024-8EC2-FD18C08847D1}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Client\TLS_Client.cbproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Server\TLS_Server.cbproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="TLS_Client">
+        <MSBuild Projects="Client\TLS_Client.cbproj"/>
+    </Target>
+    <Target Name="TLS_Client:Clean">
+        <MSBuild Projects="Client\TLS_Client.cbproj" Targets="Clean"/>
+    </Target>
+    <Target Name="TLS_Client:Make">
+        <MSBuild Projects="Client\TLS_Client.cbproj" Targets="Make"/>
+    </Target>
+    <Target Name="TLS_Server">
+        <MSBuild Projects="Server\TLS_Server.cbproj"/>
+    </Target>
+    <Target Name="TLS_Server:Clean">
+        <MSBuild Projects="Server\TLS_Server.cbproj" Targets="Clean"/>
+    </Target>
+    <Target Name="TLS_Server:Make">
+        <MSBuild Projects="Server\TLS_Server.cbproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="TLS_Client;TLS_Server"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="TLS_Client:Clean;TLS_Server:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="TLS_Client:Make;TLS_Server:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

@@ -58,6 +58,9 @@ class CTcpServer {
     ///
     bool Accept();
 
+    ///
+    bool Shutdown();
+
     /// Palautaa edelliseen virheeseen liittyvän tekstin.
     CError GetLastError() const
         { return m_LastError; }
@@ -114,6 +117,9 @@ class COpenSSL_Server {
 
     ///
     bool Accept();
+
+    ///
+    bool Shutdown();
 
     ///
     bool Write(std::string_view msg);

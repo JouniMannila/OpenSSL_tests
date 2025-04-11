@@ -30,13 +30,14 @@ CTcpServer::~CTcpServer()
 {
     SHOWFUNC("CTcpServer")
 
-    if (m_ServerSocket)
-    {
-        SHOW("  - closesocket")
-        closesocket(m_ServerSocket);
-    }
-    SHOW("  - WSACleanup")
-    WSACleanup();
+    Shutdown();
+//    if (m_ServerSocket)
+//    {
+//        SHOW("  - closesocket")
+//        closesocket(m_ServerSocket);
+//    }
+//    SHOW("  - WSACleanup")
+//    WSACleanup();
 }
 //----------------------------------------------------------------------------
 
@@ -98,6 +99,26 @@ bool CTcpServer::Accept()
 }
 //----------------------------------------------------------------------------
 
+bool CTcpServer::Shutdown()
+{
+    if (m_ClientSocket)
+    {
+//        shutdown(m_ClientSocket, SHUT_RDWR);
+        closesocket(m_ClientSocket);
+    }
+    if (m_ServerSocket)
+    {
+        SHOW("  - closesocket")
+        closesocket(m_ServerSocket);
+    }
+
+    SHOW("  - WSACleanup")
+    WSACleanup();
+
+    return true;
+}
+//----------------------------------------------------------------------------
+
 bool CTcpServer::SetLastError(std::string_view caption, std::string_view msg)
 {
     m_LastError.Caption = caption;
@@ -121,10 +142,14 @@ COpenSSL_Server::~COpenSSL_Server()
     {
         SHOW("  - SSL_shutdown")
         SSL_shutdown(m_SSL);
+
         SHOW("  - SSL_free")
         SSL_free(m_SSL);
+        m_SSL = nullptr;
+
         SHOW("  - SSL_CTX_free")
         SSL_CTX_free(m_CTX);
+        m_CTX = nullptr;
     }
     EVP_cleanup();
 }
@@ -203,6 +228,33 @@ bool COpenSSL_Server::Accept()
     SHOW("  - SSL_accept")
     if (SSL_accept(m_SSL) <= 0)
         return SetLastError("SSL_accept failed.");
+    return true;
+}
+//----------------------------------------------------------------------------
+
+bool COpenSSL_Server::Shutdown()
+{
+    SHOWFUNC("COpenSSL_Server")
+
+    SHOW("  - SSL_shutdown")
+    int ret = SSL_shutdown(m_SSL);
+    if (ret < 0)
+    {
+        std::string s = CSSL_GetError::Reason(m_SSL, ret);
+        if (!s.empty())
+            return SetLastError("SSL_shutdown failed.", s);
+        else
+            return SetLastError("SSL_shutdown failed.");
+    }
+
+//    SHOW("  - SSL_free")
+//    SSL_free(m_SSL);
+//    m_SSL = nullptr;
+//
+//    SHOW("  - SSL_CTX_free")
+//    SSL_CTX_free(m_CTX);
+//    m_CTX = nullptr;
+
     return true;
 }
 //----------------------------------------------------------------------------

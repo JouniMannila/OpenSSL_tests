@@ -136,7 +136,6 @@
         <LinkPackageStatics>rtl.lib;vcl.lib</LinkPackageStatics>
         <FinalOutputDir>..</FinalOutputDir>
         <_TCHARMapping>char</_TCHARMapping>
-        <IncludePath>C:\Program Files\OpenSSL-Win64\include;$(IncludePath)</IncludePath>
         <IntermediateOutputDir>obj</IntermediateOutputDir>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <Manifest_File>(None)</Manifest_File>

@@ -22,22 +22,24 @@
 #include <queue>
 //---------------------------------------------------------------------------
 
+typedef void __fastcall (__closure* CNewMessage)();
+
 //***************************************************************************
 //
-// class CTcpReadThread
+// class CClientThread
 // ----- --------------
 //***************************************************************************
 
 /*!
  */
 
-class CTcpReadThread : public TThread {
+class CClientThread : public TThread {
   public:
-    explicit CTcpReadThread(ztls::CTcpClient*);
-    __fastcall ~CTcpReadThread();
+    CClientThread(ztls::COpenSSL_Client*, CNewMessage);
+    __fastcall ~CClientThread();
 
-    CTcpReadThread(const CTcpReadThread&) = delete;
-    CTcpReadThread& operator=(const CTcpReadThread&) = delete;
+    CClientThread(const CClientThread&) = delete;
+    CClientThread& operator=(const CClientThread&) = delete;
 
     /// Palauttaa tiedon siitä, onko vastaanottojono tyhjä.
     bool __fastcall Empty();
@@ -46,9 +48,13 @@ class CTcpReadThread : public TThread {
     std::string __fastcall Fetch();
 
   private:
-//    CRITICAL_SECTION m_CriticalSection;
+    CRITICAL_SECTION m_CriticalSection;
 
-    ztls::CTcpClient* m_Client {};
+    ztls::COpenSSL_Client* m_Client {};
+
+    CClientThread* m_ClientThread {};
+
+    CNewMessage m_NewMessageCb { nullptr };
 
     std::deque<std::string> m_Deque;
 
@@ -83,12 +89,17 @@ private:	// User declarations
   ztls::CTcpClient* m_TcpClient {};
   ztls::COpenSSL_Client* m_SslClient {};
 
+  CClientThread* m_ClientThread {};
+
   bool m_Connected {};
+  bool m_NewMessage {};
 
   bool __fastcall Connect();
   void __fastcall Disconnect();
 
   bool __fastcall ShowError(const ztls::CError&);
+
+  void __fastcall OnNewMessage();
 
 public:		// User declarations
   __fastcall TformMain(TComponent* Owner);

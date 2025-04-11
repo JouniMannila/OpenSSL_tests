@@ -12,6 +12,8 @@
 #pragma hdrstop
 
 #include "Main_Client.h"
+
+#include "CriticalSection.h"
 //---------------------------------------------------------------------------
 
 #pragma package(smart_init)
@@ -25,35 +27,36 @@ const char* CERTIFICATE = "certs/hedsam.crt";
 
 //***************************************************************************
 //
-// class CTcpReadThread
+// class CClientThread
 // ----- --------------
 //***************************************************************************
 
-CTcpReadThread::CTcpReadThread(ztls::CTcpClient* client)
+CClientThread::CClientThread(ztls::COpenSSL_Client* client, CNewMessage cb)
   : TThread(false)
-//  , m_CriticalSection()
+  , m_CriticalSection()
   , m_Client(client)
+  , m_NewMessageCb(cb)
 {
-//    InitializeCriticalSection(&m_CriticalSection);
+    InitializeCriticalSection(&m_CriticalSection);
 }
 //----------------------------------------------------------------------------
 
-__fastcall CTcpReadThread::~CTcpReadThread()
+__fastcall CClientThread::~CClientThread()
 {
-//    DeleteCriticalSection(&m_CriticalSection);
+    DeleteCriticalSection(&m_CriticalSection);
 }
 //----------------------------------------------------------------------------
 
-bool __fastcall CTcpReadThread::Empty()
+bool __fastcall CClientThread::Empty()
 {
-//    zutl::CCriticalSection cs(&m_CriticalSection);
+    zutl::CCriticalSection cs(&m_CriticalSection);
     return m_Deque.empty();
 }
 //----------------------------------------------------------------------------
 
-std::string __fastcall CTcpReadThread::Fetch()
+std::string __fastcall CClientThread::Fetch()
 {
-//    zutl::CCriticalSection cs(&m_CriticalSection);
+    zutl::CCriticalSection cs(&m_CriticalSection);
 
     if (m_Deque.empty())
         return std::string();
@@ -64,32 +67,18 @@ std::string __fastcall CTcpReadThread::Fetch()
 }
 //----------------------------------------------------------------------------
 
-void __fastcall CTcpReadThread::Execute()
+void __fastcall CClientThread::Execute()
 {
     while (!Terminated)
     {
-//        try
-//        {
-//            AnsiString S = m_Client->IOHandler->ReadLn();
-//
-////            zutl::CCriticalSection cs(&m_CriticalSection);
-//            m_Deque.push_back(S.c_str());
-//        }
-//
-//        catch (EIdClosedSocket& e) {
-//            OutputDebugString("EIdClosedSocket&");
-//            Terminate();
-//        }
-//
-//        catch (EIdNotConnected& e) {
-//            OutputDebugString("EIdNotConnected");
-//            Terminate();
-//        }
-//
-//        catch (EIdException& e) {
-//            OutputDebugString("EIdException");
-//            Terminate();
-//        }
+        std::string message;
+        if (!m_Client->Read(message))
+            return;
+
+        m_Deque.push_back(message);
+
+        if (m_NewMessageCb)
+            m_NewMessageCb();
 
         Sleep(100);
     }
@@ -117,6 +106,7 @@ __fastcall TformMain::TformMain(TComponent* Owner)
 
 __fastcall TformMain::~TformMain()
 {
+    delete m_ClientThread;
     delete m_SslClient;
     delete m_TcpClient;
 }
@@ -149,24 +139,60 @@ void __fastcall TformMain::butSendClick(TObject *Sender)
 
 void __fastcall TformMain::timerTimer(TObject *Sender)
 {
-    char buffer[1024];
-    SHOW("  - SSL_read")
-    int bytes = SSL_read(m_SSL, buffer, sizeof(buffer));
-    if (bytes <= 0)
-        return false;
+    if (!m_Connected)
+        return;
 
-    buffer[bytes] = 0;
-    message = buffer;
+    if (std::exchange(m_NewMessage, false))
+    {
+        if (m_ClientThread->Empty())
+            return;
+
+        std::string message = m_ClientThread->Fetch();
+
+        memo->Lines->Add(message.c_str());
+    }
 }
 //---------------------------------------------------------------------------
 
 bool __fastcall TformMain::Connect()
 {
+    memo->Lines->Add("### Connect");
+
     if (!m_TcpClient->Connect())
         return ShowError(m_TcpClient->GetLastError());
 
-    if (!m_SslClient->MakeConnection(*m_TcpClient))
+    if (!m_SslClient->CreateContext())
         return ShowError(m_SslClient->GetLastError());
+
+    if (!m_SslClient->SetVersions())
+        return ShowError(m_SslClient->GetLastError());
+
+    if (!m_SslClient->CreateSSL(m_TcpClient->ServerSocket()))
+        return ShowError(m_SslClient->GetLastError());
+
+    if (!m_SslClient->Connect())
+        return ShowError(m_SslClient->GetLastError());
+
+    if (!m_SslClient->LoadVerifyLocations())
+        return ShowError(m_SslClient->GetLastError());
+
+//    if (!sslClient.VerifyCertification())
+//        return showError(sslClient.GetLastError());
+
+//    if (!m_SslClient->MakeConnection(*m_TcpClient))
+//        return ShowError(m_SslClient->GetLastError());
+
+    m_TcpClient->Disconnect();
+
+    // jos thread oli olemassa, tuhotaan se ensin
+    if (m_ClientThread)
+    {
+        delete m_ClientThread;
+        m_ClientThread = nullptr;
+    }
+
+    // luodaan thread lukemaan vaataanotettua dataa
+    m_ClientThread = new CClientThread(m_SslClient, OnNewMessage);
 
     timer->Enabled = true;
 
@@ -179,7 +205,21 @@ bool __fastcall TformMain::Connect()
 
 void __fastcall TformMain::Disconnect()
 {
+    memo->Lines->Add("### Disconnect");
+
     timer->Enabled = false;
+
+    // terminoidaan thread
+    if (m_ClientThread)
+        m_ClientThread->Terminate();
+
+    // odotetaan thread:in päättymistä
+    if (m_ClientThread)
+    {
+        m_ClientThread->WaitFor();
+        delete m_ClientThread;
+        m_ClientThread = nullptr;
+    }
 
     m_Connected = false;
     butConnect->Caption = "Connect";
@@ -189,7 +229,15 @@ void __fastcall TformMain::Disconnect()
 bool __fastcall TformMain::ShowError(const ztls::CError& error)
 {
     memo->Lines->Add(error.Caption.c_str());
+    memo->Lines->Add(error.Message.c_str());
     return false;
 }
 //----------------------------------------------------------------------------
+
+void __fastcall TformMain::OnNewMessage()
+{
+    m_NewMessage = true;
+}
+//----------------------------------------------------------------------------
+
 
