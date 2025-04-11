@@ -18,12 +18,11 @@
 
 const int PORTNO = 12350;
 
-//const char* PRIVATEKEY = "certs/lantronix-certificate.key";
-//const char* CERTIFICATE = "certs/lantronix-certificate.crt";
-const char* PRIVATEKEY = "certs/jounin-lantronix-server.key";
-const char* CERTIFICATE = "certs/jounin-lantronix-server.crt";
-//const char* PRIVATEKEY = "certs/hedsam.key";
-//const char* CERTIFICATE = "certs/hedsam.crt";
+//const char* PRIVATEKEY = "certs/jounin-lantronix-server.key";
+//const char* CERTIFICATE = "certs/jounin-lantronix-server.crt";
+
+const char* PRIVATEKEY = "certs/hedsam.key";
+const char* CERTIFICATE = "certs/hedsam.crt";
 
 const bool g_WaitAfter = false;
 
