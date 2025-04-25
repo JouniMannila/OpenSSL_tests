@@ -110,3 +110,9 @@ Projekteja muutettu k‰ytt‰m‰‰n 32-bittist‰ openssl:‰‰.
 /16/ (25.4.2025 08:34)
 
 Testi‰ Visual Studiolla.
+
+
+= = = = =
+/17/ (25.4.2025 08:34)
+
+#gitignore
