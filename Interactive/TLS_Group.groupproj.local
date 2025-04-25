@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
-  <Transactions>
-    <Transaction>2025/04/11 10.50.04.541,C:\@SOFTWARE\TestProjects\OpenSSL\Interactive\TLS_Group.groupproj=C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\ProjectGroup1.groupproj</Transaction>
+	<Transactions>
+    <Transaction>1899/12/30 00.00.00.000.541,C:\Users\jouni.mannila\Documents\Embarcadero\Studio\Projects\ProjectGroup1.groupproj=C:\@SOFTWARE\TestProjects\OpenSSL\Interactive\TLS_Group.groupproj</Transaction>
   </Transactions>
-  <Default.Personality>
-    <Projects ActiveProject="C:\@SOFTWARE\TestProjects\OpenSSL\Interactive\Client\TLS_Client.cbproj"/>
-  </Default.Personality>
+	<Default.Personality>
+		<Projects ActiveProject="F:\Hedsam\Test Projects\OpenSSL\Interactive\Client\TLS_Client.cbproj"/>
+	</Default.Personality>
 </BorlandProject>

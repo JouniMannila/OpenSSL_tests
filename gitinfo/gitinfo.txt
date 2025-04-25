@@ -97,6 +97,10 @@ Uutta testia.
 = = = = =
 /14/ (11.4.2025 15:28)
 
-Uutta testia.
-
 Lisää kehitystä.
+
+
+= = = = =
+/15/ (25.4.2025 08:32)
+
+Projekteja muutettu käyttämään 32-bittistä openssl:ää.
