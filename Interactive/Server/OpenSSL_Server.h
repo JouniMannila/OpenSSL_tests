@@ -124,6 +124,10 @@ class COpenSSL_Server {
     ///
     bool Write(std::string_view msg);
 
+    ///
+    bool Read(std::string&);
+
+    ///
     SSL* GetSSL() const
         { return m_SSL; }
 

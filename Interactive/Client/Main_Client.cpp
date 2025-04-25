@@ -182,7 +182,7 @@ bool __fastcall TformMain::Connect()
 //    if (!m_SslClient->MakeConnection(*m_TcpClient))
 //        return ShowError(m_SslClient->GetLastError());
 
-    m_TcpClient->Disconnect();
+//    m_TcpClient->Disconnect();
 
     // jos thread oli olemassa, tuhotaan se ensin
     if (m_ClientThread)

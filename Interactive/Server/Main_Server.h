@@ -19,27 +19,61 @@
 #include <Vcl.ExtCtrls.hpp>
 
 #include "OpenSSL_Server.h"
+
+#include <deque>
+#include <mutex>
 //---------------------------------------------------------------------------
 
 typedef void __fastcall (__closure* CAccepted)();
+typedef void __fastcall (__closure* CNewData)();
 
 //***************************************************************************
 //
-// class CServerThread
+// class CAcceptThread
 // ----- -------------
 //***************************************************************************
 
 /*!
  */
 
-class CServerThread : public TThread {
+class CAcceptThread : public TThread {
   public:
-    CServerThread(ztls::CTcpServer*, CAccepted);
+    CAcceptThread(ztls::CTcpServer*, CAccepted);
 
   private:
     ztls::CTcpServer* m_Server {};
 
     CAccepted m_AcceptedCb { nullptr };
+
+    // thread:in suorittava looppi
+    void __fastcall Execute();
+};
+
+
+//***************************************************************************
+//
+// class CReadThread
+// ----- -----------
+//***************************************************************************
+
+/*!
+ */
+
+class CReadThread : public TThread {
+  public:
+    CReadThread(ztls::COpenSSL_Server*, CNewData);
+
+    bool __fastcall Empty();
+    std::string __fastcall Fetch();
+
+  private:
+    ztls::COpenSSL_Server* m_Server {};
+
+    CNewData m_NewDataCb { nullptr };
+
+    std::mutex m_Mutex {};
+
+    std::deque<std::string> m_Deque {};
 
     // thread:in suorittava looppi
     void __fastcall Execute();
@@ -72,10 +106,13 @@ private:	// User declarations
   ztls::CTcpServer* m_TcpServer {};
   ztls::COpenSSL_Server* m_SslServer {};
 
-  CServerThread* m_ServerThread {};
+  CAcceptThread* m_AcceptThread {};
+  CReadThread* m_ReadThread {};
 
   bool m_Connected {};
   bool m_Accepted {};
+  bool m_NewData {};
+  bool m_ClientConnected {};
 
   bool __fastcall Connect();
   void __fastcall Disconnect();
@@ -83,6 +120,7 @@ private:	// User declarations
   bool __fastcall ShowError(const ztls::CError&);
 
   void __fastcall OnAccepted();
+  void __fastcall OnNewData();
 
 public:		// User declarations
   __fastcall TformMain(TComponent* Owner);

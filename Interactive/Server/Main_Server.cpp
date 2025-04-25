@@ -12,8 +12,6 @@
 #pragma hdrstop
 
 #include "Main_Server.h"
-
-#include <deque>
 //---------------------------------------------------------------------------
 
 #pragma package(smart_init)
@@ -27,17 +25,17 @@ const char* CERTIFICATE = "certs/hedsam.crt";
 
 //***************************************************************************
 //
-// class CServerThread
-// ----- --------------
+// class CAcceptThread
+// ----- -------------
 //***************************************************************************
 
-CServerThread::CServerThread(ztls::CTcpServer* server, CAccepted cb)
+CAcceptThread::CAcceptThread(ztls::CTcpServer* server, CAccepted cb)
   : TThread(false), m_Server(server), m_AcceptedCb(cb)
 {
 }
 //----------------------------------------------------------------------------
 
-void __fastcall CServerThread::Execute()
+void __fastcall CAcceptThread::Execute()
 {
     while (!Terminated)
     {
@@ -52,6 +50,57 @@ void __fastcall CServerThread::Execute()
 }
 //----------------------------------------------------------------------------
 
+
+//***************************************************************************
+//
+// class CReadThread
+// ----- -----------
+//***************************************************************************
+
+CReadThread::CReadThread(ztls::COpenSSL_Server* server, CNewData cb)
+  : TThread(false), m_Server(server), m_NewDataCb(cb)
+{
+}
+//----------------------------------------------------------------------------
+
+bool __fastcall CReadThread::Empty()
+{
+    std::lock_guard<std::mutex> lock(m_Mutex);
+    return m_Deque.empty();
+}
+//----------------------------------------------------------------------------
+
+std::string __fastcall CReadThread::Fetch()
+{
+    const std::lock_guard<std::mutex> lock(m_Mutex);
+
+    if (m_Deque.empty())
+        return std::string();
+
+    std::string s = m_Deque.front();
+    m_Deque.pop_front();
+    return s;
+}
+//----------------------------------------------------------------------------
+
+void __fastcall CReadThread::Execute()
+{
+    while (!Terminated)
+    {
+        std::string s;
+        if (m_Server->Read(s))
+        {
+            const std::lock_guard<std::mutex> lock(m_Mutex);
+            m_Deque.push_back(s);
+
+            if (m_NewDataCb)
+                m_NewDataCb();
+        }
+
+        Sleep(100);
+    }
+}
+//----------------------------------------------------------------------------
 
 
 //***************************************************************************
@@ -76,7 +125,8 @@ __fastcall TformMain::~TformMain()
 {
     Disconnect();
 
-    delete m_ServerThread;
+    delete m_ReadThread;
+    delete m_AcceptThread;
     delete m_TcpServer;
     delete m_SslServer;
 }
@@ -109,15 +159,30 @@ void __fastcall TformMain::timerTimer(TObject *Sender)
     {
         if (!m_SslServer->CreateSSL(m_TcpServer->ClientSocket()))
         {
+            m_ClientConnected = false;
             ShowError(m_SslServer->GetLastError());
         }
         else if (!m_SslServer->Accept())
         {
+            m_ClientConnected = false;
             ShowError(m_SslServer->GetLastError());
         }
         else
         {
             m_SslServer->Write("Hello, SSL/TLS world!");
+            m_ClientConnected = true;
+        }
+    }
+
+    else if (m_ClientConnected)
+    {
+        if (std::exchange(m_NewData, false))
+        {
+            if (!m_ReadThread->Empty())
+            {
+                std::string s = m_ReadThread->Fetch();
+                memo->Lines->Add(s.c_str());
+            }
         }
     }
 }
@@ -140,14 +205,24 @@ bool __fastcall TformMain::Connect()
         return ShowError(m_TcpServer->GetLastError());
 
     // jos thread oli olemassa, tuhotaan se ensin
-    if (m_ServerThread)
+    if (m_AcceptThread)
     {
-        delete m_ServerThread;
-        m_ServerThread = nullptr;
+        delete m_AcceptThread;
+        m_AcceptThread = nullptr;
     }
 
+    // jos thread oli olemassa, tuhotaan se ensin
+    if (m_ReadThread)
+    {
+        delete m_ReadThread;
+        m_ReadThread = nullptr;
+    }
+
+    // luodaan thread ...
+    m_AcceptThread = new CAcceptThread(m_TcpServer, OnAccepted);
+
     // luodaan thread lukemaan vaataanotettua dataa
-    m_ServerThread = new CServerThread(m_TcpServer, OnAccepted);
+    m_ReadThread = new CReadThread(m_SslServer, OnNewData);
 
     timer->Enabled = true;
 
@@ -171,15 +246,27 @@ void __fastcall TformMain::Disconnect()
     m_TcpServer->Shutdown();
 
     // terminoidaan thread
-    if (m_ServerThread)
-        m_ServerThread->Terminate();
+    if (m_AcceptThread)
+        m_AcceptThread->Terminate();
+
+    // terminoidaan thread
+    if (m_ReadThread)
+        m_ReadThread->Terminate();
 
     // odotetaan thread:in päättymistä
-    if (m_ServerThread)
+    if (m_AcceptThread)
     {
-        m_ServerThread->WaitFor();
-        delete m_ServerThread;
-        m_ServerThread = nullptr;
+        m_AcceptThread->WaitFor();
+        delete m_AcceptThread;
+        m_AcceptThread = nullptr;
+    }
+
+    // odotetaan thread:in päättymistä
+    if (m_ReadThread)
+    {
+        m_ReadThread->WaitFor();
+        delete m_ReadThread;
+        m_ReadThread = nullptr;
     }
 
     if (!m_SslServer->Shutdown())
@@ -201,6 +288,12 @@ bool __fastcall TformMain::ShowError(const ztls::CError& error)
 void __fastcall TformMain::OnAccepted()
 {
     m_Accepted = true;
+}
+//----------------------------------------------------------------------------
+
+void __fastcall TformMain::OnNewData()
+{
+    m_NewData = true;
 }
 //----------------------------------------------------------------------------
 

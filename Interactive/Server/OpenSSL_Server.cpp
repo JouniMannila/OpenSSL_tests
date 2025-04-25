@@ -270,6 +270,21 @@ bool COpenSSL_Server::Write(std::string_view msg)
 }
 //----------------------------------------------------------------------------
 
+bool COpenSSL_Server::Read(std::string& msg)
+{
+    SHOWFUNC("COpenSSL_Server")
+
+    SHOW("  - SSL_read")
+
+    char buffer[1014];
+    int bytes = SSL_read(m_SSL, buffer, sizeof(buffer));
+    if (bytes <= 0)
+        return false;
+    msg = std::string(buffer);
+    return true;
+}
+//----------------------------------------------------------------------------
+
 bool COpenSSL_Server::SetLastError(
     std::string_view caption, std::string_view msg)
 {
