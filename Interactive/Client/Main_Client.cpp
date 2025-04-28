@@ -12,8 +12,6 @@
 #pragma hdrstop
 
 #include "Main_Client.h"
-
-#include "CriticalSection.h"
 //---------------------------------------------------------------------------
 
 #pragma package(smart_init)
@@ -28,35 +26,27 @@ const char* CERTIFICATE = "certs/hedsam.crt";
 //***************************************************************************
 //
 // class CClientThread
-// ----- --------------
+// ----- -------------
 //***************************************************************************
 
 CClientThread::CClientThread(ztls::COpenSSL_Client* client, CNewMessage cb)
   : TThread(false)
-  , m_CriticalSection()
   , m_Client(client)
   , m_NewMessageCb(cb)
 {
-    InitializeCriticalSection(&m_CriticalSection);
-}
-//----------------------------------------------------------------------------
-
-__fastcall CClientThread::~CClientThread()
-{
-    DeleteCriticalSection(&m_CriticalSection);
 }
 //----------------------------------------------------------------------------
 
 bool __fastcall CClientThread::Empty()
 {
-    zutl::CCriticalSection cs(&m_CriticalSection);
+    std::lock_guard<std::mutex> lock(m_Mutex);
     return m_Deque.empty();
 }
 //----------------------------------------------------------------------------
 
 std::string __fastcall CClientThread::Fetch()
 {
-    zutl::CCriticalSection cs(&m_CriticalSection);
+    std::lock_guard<std::mutex> lock(m_Mutex);
 
     if (m_Deque.empty())
         return std::string();
@@ -75,13 +65,20 @@ void __fastcall CClientThread::Execute()
         if (!m_Client->Read(message))
             return;
 
-        m_Deque.push_back(message);
+        Push(message);
 
         if (m_NewMessageCb)
             m_NewMessageCb();
 
         Sleep(100);
     }
+}
+//----------------------------------------------------------------------------
+
+void CClientThread::Push(const std::string& message)
+{
+    std::lock_guard<std::mutex> lock(m_Mutex);
+    m_Deque.push_back(message);
 }
 //----------------------------------------------------------------------------
 
@@ -95,20 +92,18 @@ void __fastcall CClientThread::Execute()
 __fastcall TformMain::TformMain(TComponent* Owner)
   : TForm(Owner)
 {
-    m_TcpClient = new ztls::CTcpClient;
+    m_TcpClient = std::make_unique<ztls::CTcpClient>();
     m_TcpClient->SetAddress(ADDRESS);
     m_TcpClient->SetPortNo(PORTNO);
 
-    m_SslClient = new ztls::COpenSSL_Client;
+    m_SslClient = std::make_unique<ztls::COpenSSL_Client>();
     m_SslClient->SetCertificate(CERTIFICATE);
 }
 //---------------------------------------------------------------------------
 
 __fastcall TformMain::~TformMain()
 {
-    delete m_ClientThread;
-    delete m_SslClient;
-    delete m_TcpClient;
+    Disconnect();
 }
 //----------------------------------------------------------------------------
 
@@ -182,17 +177,9 @@ bool __fastcall TformMain::Connect()
 //    if (!m_SslClient->MakeConnection(*m_TcpClient))
 //        return ShowError(m_SslClient->GetLastError());
 
-//    m_TcpClient->Disconnect();
-
-    // jos thread oli olemassa, tuhotaan se ensin
-    if (m_ClientThread)
-    {
-        delete m_ClientThread;
-        m_ClientThread = nullptr;
-    }
-
     // luodaan thread lukemaan vaataanotettua dataa
-    m_ClientThread = new CClientThread(m_SslClient, OnNewMessage);
+    m_ClientThread = std::make_unique<CClientThread>(
+        m_SslClient.get(), OnNewMessage);
 
     timer->Enabled = true;
 
@@ -205,20 +192,23 @@ bool __fastcall TformMain::Connect()
 
 void __fastcall TformMain::Disconnect()
 {
+    if (!m_Connected)
+        return;
+
     memo->Lines->Add("### Disconnect");
 
     timer->Enabled = false;
 
-    // terminoidaan thread
-    if (m_ClientThread)
-        m_ClientThread->Terminate();
+    m_TcpClient->Disconnect();
+    m_SslClient->Disconnect();
 
-    // odotetaan thread:in päättymistä
     if (m_ClientThread)
     {
+        // terminoidaan thread
+        m_ClientThread->Terminate();
+
+        // odotetaan thredin päättymistä
         m_ClientThread->WaitFor();
-        delete m_ClientThread;
-        m_ClientThread = nullptr;
     }
 
     m_Connected = false;
@@ -239,5 +229,4 @@ void __fastcall TformMain::OnNewMessage()
     m_NewMessage = true;
 }
 //----------------------------------------------------------------------------
-
 

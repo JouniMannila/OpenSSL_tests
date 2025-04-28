@@ -69,6 +69,8 @@ class CTcpClient {
 
     int m_ServerSocket {};
 
+    bool m_WSAStartupCalled {};
+
     CError m_LastError {};
 
     /// Kutsuu WSAStartup.
@@ -135,6 +137,9 @@ class COpenSSL_Client {
 
     ///
     bool Connect();
+
+    ///
+    void Disconnect();
 
     ///
     bool LoadVerifyLocations();

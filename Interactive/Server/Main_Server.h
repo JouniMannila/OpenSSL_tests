@@ -77,6 +77,9 @@ class CReadThread : public TThread {
 
     // thread:in suorittava looppi
     void __fastcall Execute();
+
+    //
+    void __fastcall Push(const std::string&);
 };
 
 
@@ -103,11 +106,11 @@ __published:	// IDE-managed Components
   void __fastcall timerTimer(TObject *Sender);
 
 private:	// User declarations
-  ztls::CTcpServer* m_TcpServer {};
-  ztls::COpenSSL_Server* m_SslServer {};
+  std::unique_ptr<ztls::CTcpServer> m_TcpServer {};
+  std::unique_ptr<ztls::COpenSSL_Server> m_SslServer {};
 
-  CAcceptThread* m_AcceptThread {};
-  CReadThread* m_ReadThread {};
+  std::unique_ptr<CAcceptThread> m_AcceptThread {};
+  std::unique_ptr<CReadThread> m_ReadThread {};
 
   bool m_Connected {};
   bool m_Accepted {};

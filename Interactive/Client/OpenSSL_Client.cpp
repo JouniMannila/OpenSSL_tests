@@ -50,16 +50,7 @@ class CSSLGuard {
 
 CTcpClient::~CTcpClient()
 {
-    SHOWFUNC("CTcpClient")
-
     Disconnect();
-//    if (m_ServerSocket)
-//    {
-//        SHOW("  - closesocket")
-//        closesocket(m_ServerSocket);
-//    }
-//    SHOW("  - WSACleanup")
-//    WSACleanup();
 }
 //----------------------------------------------------------------------------
 
@@ -83,6 +74,8 @@ bool CTcpClient::Initialize()
     SHOW("  - WSAStartup")
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
         return SetLastError("WSAStartup failed.");
+
+    m_WSAStartupCalled = true;
     return true;
 }
 //----------------------------------------------------------------------------
@@ -125,8 +118,13 @@ void CTcpClient::Disconnect()
         closesocket(m_ServerSocket);
         m_ServerSocket = 0;
     }
-    SHOW("  - WSACleanup")
-    WSACleanup();
+
+    if (m_WSAStartupCalled)
+    {
+        SHOW("  - WSACleanup")
+        WSACleanup();
+        m_WSAStartupCalled = false;
+    }
 }
 //----------------------------------------------------------------------------
 
@@ -150,15 +148,18 @@ COpenSSL_Client::~COpenSSL_Client()
 {
     SHOWFUNC("COpenSSL_Client")
 
+    Disconnect();
+
     if (m_SSL)
     {
-        SHOW("  - SSL_shutdown")
-        SSL_shutdown(m_SSL);
+//        SHOW("  - SSL_shutdown")
+//        SSL_shutdown(m_SSL);
         SHOW("  - SSL_free")
         SSL_free(m_SSL);
         SHOW("  - SSL_CTX_free")
         SSL_CTX_free(m_CTX);
     }
+
     EVP_cleanup();
 }
 //----------------------------------------------------------------------------
@@ -285,6 +286,17 @@ bool COpenSSL_Client::Connect()
     s1 += "\n";
     s1 += getOpenSSLError();
     return SetLastError("SSL_connect failed.", s1);
+}
+//----------------------------------------------------------------------------
+
+void COpenSSL_Client::Disconnect()
+{
+    if (m_SSL)
+    {
+        SHOW("  - SSL_shutdown")
+        SSL_shutdown(m_SSL);
+//        m_SSL = nullptr;
+    }
 }
 //----------------------------------------------------------------------------
 

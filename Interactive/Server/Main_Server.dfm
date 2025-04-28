@@ -19,6 +19,12 @@ object formMain: TformMain
     Height = 384
     Align = alClient
     Color = 5723991
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = 9240575
+    Font.Height = -12
+    Font.Name = 'Segoe UI'
+    Font.Style = []
+    ParentFont = False
     TabOrder = 0
   end
   object panTop: TPanel

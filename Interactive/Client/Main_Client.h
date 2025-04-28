@@ -19,7 +19,9 @@
 #include <Vcl.ExtCtrls.hpp>
 
 #include "OpenSSL_Client.h"
+
 #include <queue>
+#include <mutex>
 //---------------------------------------------------------------------------
 
 typedef void __fastcall (__closure* CNewMessage)();
@@ -36,10 +38,6 @@ typedef void __fastcall (__closure* CNewMessage)();
 class CClientThread : public TThread {
   public:
     CClientThread(ztls::COpenSSL_Client*, CNewMessage);
-    __fastcall ~CClientThread();
-
-    CClientThread(const CClientThread&) = delete;
-    CClientThread& operator=(const CClientThread&) = delete;
 
     /// Palauttaa tiedon siitä, onko vastaanottojono tyhjä.
     bool __fastcall Empty();
@@ -48,18 +46,19 @@ class CClientThread : public TThread {
     std::string __fastcall Fetch();
 
   private:
-    CRITICAL_SECTION m_CriticalSection;
-
     ztls::COpenSSL_Client* m_Client {};
 
-    CClientThread* m_ClientThread {};
+    std::mutex m_Mutex {};
 
     CNewMessage m_NewMessageCb { nullptr };
 
-    std::deque<std::string> m_Deque;
+    std::deque<std::string> m_Deque {};
 
     // thread:in suorittava looppi
     void __fastcall Execute();
+
+    // kopioi viestin jonoon mutex:in sisällä
+    void __fastcall Push(const std::string& message);
 };
 
 
@@ -86,10 +85,9 @@ __published:	// IDE-managed Components
   void __fastcall timerTimer(TObject *Sender);
 
 private:	// User declarations
-  ztls::CTcpClient* m_TcpClient {};
-  ztls::COpenSSL_Client* m_SslClient {};
-
-  CClientThread* m_ClientThread {};
+  std::unique_ptr<ztls::CTcpClient> m_TcpClient {};
+  std::unique_ptr<ztls::COpenSSL_Client> m_SslClient {};
+  std::unique_ptr<CClientThread> m_ClientThread {};
 
   bool m_Connected {};
   bool m_NewMessage {};

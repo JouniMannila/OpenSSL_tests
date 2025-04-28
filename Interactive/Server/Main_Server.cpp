@@ -90,8 +90,7 @@ void __fastcall CReadThread::Execute()
         std::string s;
         if (m_Server->Read(s))
         {
-            const std::lock_guard<std::mutex> lock(m_Mutex);
-            m_Deque.push_back(s);
+            Push(s);
 
             if (m_NewDataCb)
                 m_NewDataCb();
@@ -99,6 +98,13 @@ void __fastcall CReadThread::Execute()
 
         Sleep(100);
     }
+}
+//----------------------------------------------------------------------------
+
+void __fastcall CReadThread::Push(const std::string& s)
+{
+    const std::lock_guard<std::mutex> lock(m_Mutex);
+    m_Deque.push_back(s);
 }
 //----------------------------------------------------------------------------
 
@@ -112,10 +118,10 @@ void __fastcall CReadThread::Execute()
 __fastcall TformMain::TformMain(TComponent* Owner)
   : TForm(Owner)
 {
-    m_TcpServer = new ztls::CTcpServer;
+    m_TcpServer = std::make_unique<ztls::CTcpServer>();
     m_TcpServer->SetPortNo(PORTNO);
 
-    m_SslServer = new ztls::COpenSSL_Server;
+    m_SslServer = std::make_unique<ztls::COpenSSL_Server>();
     m_SslServer->SetPrivateKey(PRIVATEKEY);
     m_SslServer->SetCertificate(CERTIFICATE);
 }
@@ -124,11 +130,6 @@ __fastcall TformMain::TformMain(TComponent* Owner)
 __fastcall TformMain::~TformMain()
 {
     Disconnect();
-
-    delete m_ReadThread;
-    delete m_AcceptThread;
-    delete m_TcpServer;
-    delete m_SslServer;
 }
 //----------------------------------------------------------------------------
 
@@ -204,25 +205,12 @@ bool __fastcall TformMain::Connect()
     if (!m_TcpServer->Connect())
         return ShowError(m_TcpServer->GetLastError());
 
-    // jos thread oli olemassa, tuhotaan se ensin
-    if (m_AcceptThread)
-    {
-        delete m_AcceptThread;
-        m_AcceptThread = nullptr;
-    }
-
-    // jos thread oli olemassa, tuhotaan se ensin
-    if (m_ReadThread)
-    {
-        delete m_ReadThread;
-        m_ReadThread = nullptr;
-    }
-
     // luodaan thread ...
-    m_AcceptThread = new CAcceptThread(m_TcpServer, OnAccepted);
+    m_AcceptThread =
+        std::make_unique<CAcceptThread>(m_TcpServer.get(), OnAccepted);
 
     // luodaan thread lukemaan vaataanotettua dataa
-    m_ReadThread = new CReadThread(m_SslServer, OnNewData);
+    m_ReadThread = std::make_unique<CReadThread>(m_SslServer.get(), OnNewData);
 
     timer->Enabled = true;
 
@@ -257,7 +245,6 @@ void __fastcall TformMain::Disconnect()
     if (m_AcceptThread)
     {
         m_AcceptThread->WaitFor();
-        delete m_AcceptThread;
         m_AcceptThread = nullptr;
     }
 
@@ -265,7 +252,6 @@ void __fastcall TformMain::Disconnect()
     if (m_ReadThread)
     {
         m_ReadThread->WaitFor();
-        delete m_ReadThread;
         m_ReadThread = nullptr;
     }
 

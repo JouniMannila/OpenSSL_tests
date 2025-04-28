@@ -68,8 +68,10 @@ class CTcpServer {
   private:
     int m_PortNo {};
 
-    int m_ServerSocket {};
-    int m_ClientSocket {};
+    int m_ServerSocket { INVALID_SOCKET };
+    int m_ClientSocket { INVALID_SOCKET };
+
+    bool m_WSAStartupCalled {};
 
     CError m_LastError {};
 
