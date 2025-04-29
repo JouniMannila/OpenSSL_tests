@@ -12,6 +12,8 @@
 #pragma hdrstop
 
 #include "Main_Client.h"
+
+#include "Error.h"
 //---------------------------------------------------------------------------
 
 #pragma package(smart_init)
@@ -29,10 +31,12 @@ const char* CERTIFICATE = "certs/hedsam.crt";
 // ----- -------------
 //***************************************************************************
 
-CClientThread::CClientThread(ztls::COpenSSL_Client* client, CNewMessage cb)
+CClientThread::CClientThread(
+    ztls::COpenSSL_Client* client, CNewMessage messageCb, CCloseNotify closeCb)
   : TThread(false)
   , m_Client(client)
-  , m_NewMessageCb(cb)
+  , m_NewMessageCb(messageCb)
+  , m_CloseNotifyCb(closeCb)
 {
 }
 //----------------------------------------------------------------------------
@@ -62,8 +66,32 @@ void __fastcall CClientThread::Execute()
     while (!Terminated)
     {
         std::string message;
-        if (!m_Client->Read(message))
-            return;
+        int bytes = m_Client->Read(message);
+
+        if (bytes <= 0)
+        {
+            int err = SSL_get_error(m_Client->GetSSL(), bytes);
+            if (err == SSL_ERROR_ZERO_RETURN) // close_notify
+            {
+                if (m_CloseNotifyCb)
+                    m_CloseNotifyCb();
+            }
+            else if (err == SSL_ERROR_SYSCALL)
+            {
+                // timeout or network error
+            }
+            else if (err == SSL_ERROR_WANT_READ)
+            {
+            }
+            else if (err == SSL_ERROR_WANT_WRITE)
+            {
+            }
+            else
+            {
+                std::string s =
+                    ztls::CSSL_GetError::Reason(m_Client->GetSSL(), bytes);
+            }
+        }
 
         Push(message);
 
@@ -137,6 +165,12 @@ void __fastcall TformMain::timerTimer(TObject *Sender)
     if (!m_Connected)
         return;
 
+    if (std::exchange(m_CloseNotified, false))
+    {
+        memo->Lines->Add("Close notified");
+        Disconnect();
+    }
+
     if (std::exchange(m_NewMessage, false))
     {
         if (m_ClientThread->Empty())
@@ -155,6 +189,8 @@ bool __fastcall TformMain::Connect()
 
     if (!m_TcpClient->Connect())
         return ShowError(m_TcpClient->GetLastError());
+
+    m_TcpClient->SetTimeout(5000);
 
     if (!m_SslClient->CreateContext())
         return ShowError(m_SslClient->GetLastError());
@@ -179,7 +215,7 @@ bool __fastcall TformMain::Connect()
 
     // luodaan thread lukemaan vaataanotettua dataa
     m_ClientThread = std::make_unique<CClientThread>(
-        m_SslClient.get(), OnNewMessage);
+        m_SslClient.get(), OnNewMessage, OnCloseNotify);
 
     timer->Enabled = true;
 
@@ -199,6 +235,7 @@ void __fastcall TformMain::Disconnect()
 
     timer->Enabled = false;
 
+    m_SslClient->Shutdown();
     m_TcpClient->Disconnect();
     m_SslClient->Disconnect();
 
@@ -229,4 +266,11 @@ void __fastcall TformMain::OnNewMessage()
     m_NewMessage = true;
 }
 //----------------------------------------------------------------------------
+
+void __fastcall TformMain::OnCloseNotify()
+{
+    m_CloseNotified = true;
+}
+//----------------------------------------------------------------------------
+
 

@@ -54,6 +54,9 @@ class CTcpClient {
         { return m_ServerSocket; }
 
     ///
+    void SetTimeout(DWORD timeout);
+
+    ///
     bool Connect();
 
     ///
@@ -142,6 +145,9 @@ class COpenSSL_Client {
     void Disconnect();
 
     ///
+    void Shutdown();
+
+    ///
     bool LoadVerifyLocations();
 
     ///
@@ -154,7 +160,7 @@ class COpenSSL_Client {
     bool Write(std::string_view message);
 
     ///
-    bool Read(std::string& message);
+    int Read(std::string& message);
 
     /// Palautaa edelliseen virheeseen liittyvän tekstin.
     CError GetLastError() const

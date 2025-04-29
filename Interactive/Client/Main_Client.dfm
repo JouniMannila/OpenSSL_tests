@@ -57,6 +57,7 @@ object formMain: TformMain
   end
   object timer: TTimer
     Enabled = False
+    Interval = 100
     OnTimer = timerTimer
     Left = 32
     Top = 88

@@ -14,6 +14,7 @@
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <winsock.h>
 //---------------------------------------------------------------------------
 
 #pragma package(smart_init)
@@ -22,6 +23,7 @@ namespace ztls {
 
 #define SHOWFUNC(class)  std::cout << class << "::" << __FUNC__ << std::endl;
 #define SHOW(text)  std::cout << text << std::endl;
+
 
 //***************************************************************************
 //
@@ -128,6 +130,14 @@ void CTcpClient::Disconnect()
 }
 //----------------------------------------------------------------------------
 
+void CTcpClient::SetTimeout(DWORD timeout)
+{
+    setsockopt(
+        m_ServerSocket, SOL_SOCKET, SO_RCVTIMEO,
+        (const char*)&timeout, sizeof(timeout));
+}
+//----------------------------------------------------------------------------
+
 bool CTcpClient::SetLastError(
     const std::string& caption, const std::string& msg)
 {
@@ -154,10 +164,10 @@ COpenSSL_Client::~COpenSSL_Client()
     {
 //        SHOW("  - SSL_shutdown")
 //        SSL_shutdown(m_SSL);
-        SHOW("  - SSL_free")
-        SSL_free(m_SSL);
-        SHOW("  - SSL_CTX_free")
-        SSL_CTX_free(m_CTX);
+//        SHOW("  - SSL_free")
+//        SSL_free(m_SSL);
+//        SHOW("  - SSL_CTX_free")
+//        SSL_CTX_free(m_CTX);
     }
 
     EVP_cleanup();
@@ -293,9 +303,34 @@ void COpenSSL_Client::Disconnect()
 {
     if (m_SSL)
     {
+//        SHOW("  - SSL_shutdown")
+//        int status = SSL_shutdown(m_SSL);
+
+        SHOW("  - SSL_free")
+        SSL_free(m_SSL);
+        SHOW("  - SSL_CTX_free")
+        SSL_CTX_free(m_CTX);
+
+        m_SSL = nullptr;
+    }
+}
+//----------------------------------------------------------------------------
+
+void COpenSSL_Client::Shutdown()
+{
+    if (m_SSL)
+    {
         SHOW("  - SSL_shutdown")
-        SSL_shutdown(m_SSL);
-//        m_SSL = nullptr;
+        int status = SSL_shutdown(m_SSL);
+
+        if (status <= 0)
+        {
+            std::string s = CSSL_GetError::Reason(m_SSL, status);
+            if (!s.empty())
+                SetLastError("SSL_shutdown failed.", s);
+            else
+                SetLastError("SSL_shutdown failed.");
+        }
     }
 }
 //----------------------------------------------------------------------------
@@ -334,6 +369,12 @@ bool COpenSSL_Client::Write(std::string_view message)
 {
     SHOWFUNC("COpenSSL_Client")
 
+//    if (!is_connection_active(m_SSL))
+//    {
+//        return SetLastError("Connection is not active", "");
+//        return false;
+//    }
+
     SHOW("  - SSL_write")
     int ret = SSL_write(m_SSL, message.data(), message.size());
     if (ret > 0)
@@ -347,7 +388,7 @@ bool COpenSSL_Client::Write(std::string_view message)
 }
 //----------------------------------------------------------------------------
 
-bool COpenSSL_Client::Read(std::string& message)
+int COpenSSL_Client::Read(std::string& message)
 {
     SHOWFUNC("COpenSSL_Client")
 
@@ -355,11 +396,11 @@ bool COpenSSL_Client::Read(std::string& message)
     SHOW("  - SSL_read")
     int bytes = SSL_read(m_SSL, buffer, sizeof(buffer));
     if (bytes <= 0)
-        return false;
+        return bytes;
 
     buffer[bytes] = 0;
     message = buffer;
-    return true;
+    return bytes;
 }
 //----------------------------------------------------------------------------
 

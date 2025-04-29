@@ -209,10 +209,6 @@
             <BuildOrder>1</BuildOrder>
             <PCH>true</PCH>
         </PCHCompile>
-        <CppCompile Include="..\Common\CriticalSection.cpp">
-            <DependentOn>..\Common\CriticalSection.h</DependentOn>
-            <BuildOrder>7</BuildOrder>
-        </CppCompile>
         <CppCompile Include="..\Common\Error.cpp">
             <DependentOn>..\Common\Error.h</DependentOn>
             <BuildOrder>5</BuildOrder>
@@ -301,12 +297,36 @@
                     </Platform>
                 </DeployFile>
                 <DeployFile LocalName="..\TLS_Client.exe" Configuration="Debug" Class="ProjectOutput"/>
+                <DeployFile LocalName="..\TLS_Client.exe" Configuration="Debug" Class="ProjectOutput">
+                    <Platform Name="Win32">
+                        <RemoteName>TLS_Client.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\TLS_Client.tds" Configuration="Debug" Class="DebugSymbols">
+                    <Platform Name="Win32">
+                        <RemoteName>TLS_Client.tds</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName=".\Win32\Debug\TLS_Client.exe" Configuration="Debug" Class="ProjectOutput"/>
                 <DeployFile LocalName=".\Win32\Debug\TLS_Client.tds" Configuration="Debug" Class="DebugSymbols"/>
                 <DeployFile LocalName="libcrypto.lib" Configuration="Debug" Class="ProjectFile"/>
                 <DeployFile LocalName="libcrypto_omf.lib" Configuration="Debug" Class="ProjectFile"/>
+                <DeployFile LocalName="libcrypto_omf.lib" Configuration="Debug" Class="ProjectFile">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="libssl.lib" Configuration="Debug" Class="ProjectFile"/>
                 <DeployFile LocalName="libssl_omf.lib" Configuration="Debug" Class="ProjectFile"/>
+                <DeployFile LocalName="libssl_omf.lib" Configuration="Debug" Class="ProjectFile">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployClass Name="AdditionalDebugSymbols">
                     <Platform Name="iOSSimulator">
                         <Operation>1</Operation>

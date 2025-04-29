@@ -237,24 +237,39 @@ bool COpenSSL_Server::Shutdown()
 {
     SHOWFUNC("COpenSSL_Server")
 
-//    SHOW("  - SSL_shutdown")
-//    int ret = SSL_shutdown(m_SSL);
-//    if (ret < 0)
-//    {
-//        std::string s = CSSL_GetError::Reason(m_SSL, ret);
-//        if (!s.empty())
-//            return SetLastError("SSL_shutdown failed.", s);
-//        else
-//            return SetLastError("SSL_shutdown failed.");
-//    }
-//
-////    SHOW("  - SSL_free")
-////    SSL_free(m_SSL);
-////    m_SSL = nullptr;
-////
-////    SHOW("  - SSL_CTX_free")
-////    SSL_CTX_free(m_CTX);
-////    m_CTX = nullptr;
+    SHOW("  - SSL_shutdown")
+    int status = SSL_shutdown(m_SSL);
+
+    if (status == 0)
+        status = SSL_shutdown(m_SSL);
+    else if (status <= 0)
+    {
+        std::string s = CSSL_GetError::Reason(m_SSL, status);
+        if (!s.empty())
+            return SetLastError("SSL_shutdown failed.", s);
+        else
+            return SetLastError("SSL_shutdown failed.");
+    }
+
+    return true;
+}
+//----------------------------------------------------------------------------
+
+bool COpenSSL_Server::Free()
+{
+    if (m_SSL)
+    {
+        SHOW("  - SSL_free")
+        SSL_free(m_SSL);
+        m_SSL = nullptr;
+    }
+
+    if (m_CTX)
+    {
+        SHOW("  - SSL_CTX_free")
+        SSL_CTX_free(m_CTX);
+        m_CTX = nullptr;
+    }
 
     return true;
 }
@@ -265,8 +280,9 @@ bool COpenSSL_Server::Write(std::string_view msg)
     SHOWFUNC("COpenSSL_Server")
 
     SHOW("  - SSL_write")
-    if (SSL_write(m_SSL, msg.data(), msg.size()) == 0)
-        return SetLastError("SSL_accept failed.");
+    int bytesWritten = SSL_write(m_SSL, msg.data(), msg.size());
+    if (bytesWritten <= 0)
+        return SetLastError("SSL_write failed.");
     return true;
 }
 //----------------------------------------------------------------------------

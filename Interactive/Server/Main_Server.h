@@ -34,6 +34,7 @@ typedef void __fastcall (__closure* CNewData)();
 //***************************************************************************
 
 /*!
+ Thread joka odottaa yhteyttä client:ilta.
  */
 
 class CAcceptThread : public TThread {
@@ -57,6 +58,7 @@ class CAcceptThread : public TThread {
 //***************************************************************************
 
 /*!
+ Thread joka odottaa dataa client:ilta.
  */
 
 class CReadThread : public TThread {
@@ -102,7 +104,6 @@ __published:	// IDE-managed Components
   TTimer *timer;
   void __fastcall butConnectClick(TObject *Sender);
   void __fastcall butSendClick(TObject *Sender);
-  void __fastcall FormShow(TObject *Sender);
   void __fastcall timerTimer(TObject *Sender);
 
 private:	// User declarations

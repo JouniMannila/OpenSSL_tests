@@ -10,7 +10,6 @@ object formMain: TformMain
   Font.Height = -12
   Font.Name = 'Segoe UI'
   Font.Style = []
-  OnShow = FormShow
   TextHeight = 15
   object memo: TMemo
     Left = 0
@@ -20,7 +19,7 @@ object formMain: TformMain
     Align = alClient
     Color = 5723991
     Font.Charset = DEFAULT_CHARSET
-    Font.Color = 9240575
+    Font.Color = 13236978
     Font.Height = -12
     Font.Name = 'Segoe UI'
     Font.Style = []
@@ -57,7 +56,7 @@ object formMain: TformMain
   end
   object timer: TTimer
     Enabled = False
-    Interval = 250
+    Interval = 100
     OnTimer = timerTimer
     Left = 40
     Top = 80

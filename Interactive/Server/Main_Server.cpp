@@ -133,12 +133,6 @@ __fastcall TformMain::~TformMain()
 }
 //----------------------------------------------------------------------------
 
-void __fastcall TformMain::FormShow(TObject *Sender)
-{
-//
-}
-//---------------------------------------------------------------------------
-
 void __fastcall TformMain::butConnectClick(TObject *Sender)
 {
     if (m_Connected)
@@ -150,7 +144,14 @@ void __fastcall TformMain::butConnectClick(TObject *Sender)
 
 void __fastcall TformMain::butSendClick(TObject *Sender)
 {
-//
+    if (m_ClientConnected)
+    {
+        if (!m_SslServer->Write("Hello from server."))
+        {
+            m_ClientConnected = false;
+            ShowError(m_SslServer->GetLastError());
+        }
+    }
 }
 //---------------------------------------------------------------------------
 
@@ -230,6 +231,11 @@ void __fastcall TformMain::Disconnect()
 
     timer->Enabled = false;
 
+    if (!m_SslServer->Shutdown())
+        ShowError(m_SslServer->GetLastError());
+
+    m_SslServer->Free();
+
     //
     m_TcpServer->Shutdown();
 
@@ -254,9 +260,6 @@ void __fastcall TformMain::Disconnect()
         m_ReadThread->WaitFor();
         m_ReadThread = nullptr;
     }
-
-    if (!m_SslServer->Shutdown())
-        ShowError(m_SslServer->GetLastError());
 
     m_Connected = false;
     butConnect->Caption = "Connect";

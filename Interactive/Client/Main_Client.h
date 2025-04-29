@@ -25,6 +25,7 @@
 //---------------------------------------------------------------------------
 
 typedef void __fastcall (__closure* CNewMessage)();
+typedef void __fastcall (__closure* CCloseNotify)();
 
 //***************************************************************************
 //
@@ -37,7 +38,7 @@ typedef void __fastcall (__closure* CNewMessage)();
 
 class CClientThread : public TThread {
   public:
-    CClientThread(ztls::COpenSSL_Client*, CNewMessage);
+    CClientThread(ztls::COpenSSL_Client*, CNewMessage, CCloseNotify);
 
     /// Palauttaa tiedon siitä, onko vastaanottojono tyhjä.
     bool __fastcall Empty();
@@ -51,6 +52,7 @@ class CClientThread : public TThread {
     std::mutex m_Mutex {};
 
     CNewMessage m_NewMessageCb { nullptr };
+    CCloseNotify m_CloseNotifyCb { nullptr };
 
     std::deque<std::string> m_Deque {};
 
@@ -91,6 +93,7 @@ private:	// User declarations
 
   bool m_Connected {};
   bool m_NewMessage {};
+  bool m_CloseNotified {};
 
   bool __fastcall Connect();
   void __fastcall Disconnect();
@@ -98,6 +101,7 @@ private:	// User declarations
   bool __fastcall ShowError(const ztls::CError&);
 
   void __fastcall OnNewMessage();
+  void __fastcall OnCloseNotify();
 
 public:		// User declarations
   __fastcall TformMain(TComponent* Owner);

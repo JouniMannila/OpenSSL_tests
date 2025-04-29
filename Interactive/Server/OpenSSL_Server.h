@@ -124,6 +124,9 @@ class COpenSSL_Server {
     bool Shutdown();
 
     ///
+    bool Free();
+
+    ///
     bool Write(std::string_view msg);
 
     ///
