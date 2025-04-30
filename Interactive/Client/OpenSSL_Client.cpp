@@ -19,11 +19,28 @@
 
 #pragma package(smart_init)
 
+CFuncPtr g_MemoWriter {};
+
+#ifdef CONSOLE
+
+  #define SHOWFUNC(class)  std::cout << class << "::" << __FUNC__ << std::endl;
+  #define SHOW(text)  std::cout << text << std::endl;
+
+#else
+
+  #define SHOWFUNC(class) \
+    if (g_MemoWriter.Func) \
+      g_MemoWriter.Func( \
+        g_MemoWriter.This, std::string(class) + "::" + std::string(__FUNC__));
+
+  #define SHOW(text) \
+    if (g_MemoWriter.Func) \
+      g_MemoWriter.Func(g_MemoWriter.This, text);
+
+#endif
+
+
 namespace ztls {
-
-#define SHOWFUNC(class)  std::cout << class << "::" << __FUNC__ << std::endl;
-#define SHOW(text)  std::cout << text << std::endl;
-
 
 //***************************************************************************
 //
@@ -56,47 +73,47 @@ CTcpClient::~CTcpClient()
 }
 //----------------------------------------------------------------------------
 
-bool CTcpClient::Connect()
+CTlsResult CTcpClient::Connect()
 {
-    if (!Initialize())
-        return false;
+    if (CTlsResult r = Initialize(); !r)
+        return r;
 
-    if (!DoConnect())
-        return false;
+    if (CTlsResult r = DoConnect(); !r)
+        return r;
 
-    return true;
+    return CTlsResult();
 }
 //----------------------------------------------------------------------------
 
-bool CTcpClient::Initialize()
+CTlsResult CTcpClient::Initialize()
 {
     SHOWFUNC("CTcpClient")
 
     WSADATA wsaData;
     SHOW("  - WSAStartup")
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
-        return SetLastError("WSAStartup failed.");
+        return SetLastError(tlse_TCP_WSAStartup);
 
     m_WSAStartupCalled = true;
-    return true;
+    return CTlsResult();
 }
 //----------------------------------------------------------------------------
 
-bool CTcpClient::DoConnect()
+CTlsResult CTcpClient::DoConnect()
 {
     SHOWFUNC("CTcpClient")
 
     if (m_PortNo == 0)
-        return SetLastError("Port == 0.");
+        return SetLastError(tlse_TCP_Port);
 
     if (m_Address.empty())
-        return SetLastError("Address == \"\".");
+        return SetLastError(tlse_TCP_Address);
 
     // luodaan socket
     SHOW("  - socket")
-    m_ServerSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (m_ServerSocket < 0)
-        return SetLastError("Create socket failed.");
+    m_Socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (m_Socket == INVALID_SOCKET)
+        return SetLastError(tlse_TCP_socket);
 
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
@@ -105,20 +122,20 @@ bool CTcpClient::DoConnect()
 
     // yritetään kytkeytyä
     SHOW("  - connect")
-    if (connect(m_ServerSocket, (struct sockaddr*)&addr, sizeof(addr)) < 0)
-        return SetLastError("Unable to connect.");
+    if (connect(m_Socket, (struct sockaddr*)&addr, sizeof(addr)) < 0)
+        return SetLastError(tlse_TCP_connect);
 
-    return true;
+    return CTlsResult();
 }
 //----------------------------------------------------------------------------
 
 void CTcpClient::Disconnect()
 {
-    if (m_ServerSocket)
+    if (m_Socket != INVALID_SOCKET)
     {
         SHOW("  - closesocket")
-        closesocket(m_ServerSocket);
-        m_ServerSocket = 0;
+        closesocket(m_Socket);
+        m_Socket = INVALID_SOCKET;
     }
 
     if (m_WSAStartupCalled)
@@ -130,20 +147,17 @@ void CTcpClient::Disconnect()
 }
 //----------------------------------------------------------------------------
 
-void CTcpClient::SetTimeout(DWORD timeout)
+void CTcpClient::SetReadTimeout(DWORD timeout)
 {
     setsockopt(
-        m_ServerSocket, SOL_SOCKET, SO_RCVTIMEO,
-        (const char*)&timeout, sizeof(timeout));
+        m_Socket, SOL_SOCKET, SO_RCVTIMEO,
+        reinterpret_cast<const char*>(&timeout), sizeof(timeout));
 }
 //----------------------------------------------------------------------------
 
-bool CTcpClient::SetLastError(
-    const std::string& caption, const std::string& msg)
+CTlsResult CTcpClient::SetLastError(int errCode, const std::string& msg)
 {
-    m_LastError.Caption = caption;
-    m_LastError.Message = msg;
-    return false;
+    return CTlsResult(errCode, msg);
 }
 //----------------------------------------------------------------------------
 
@@ -158,45 +172,36 @@ COpenSSL_Client::~COpenSSL_Client()
 {
     SHOWFUNC("COpenSSL_Client")
 
-    Disconnect();
-
-    if (m_SSL)
-    {
-//        SHOW("  - SSL_shutdown")
-//        SSL_shutdown(m_SSL);
-//        SHOW("  - SSL_free")
-//        SSL_free(m_SSL);
-//        SHOW("  - SSL_CTX_free")
-//        SSL_CTX_free(m_CTX);
-    }
+    Shutdown();
+    Free();
 
     EVP_cleanup();
 }
 //----------------------------------------------------------------------------
 
-bool COpenSSL_Client::MakeConnection(CTcpClient& tcpClient)
+CTlsResult COpenSSL_Client::MakeConnection(CTcpClient& tcpClient)
 {
     Initialize();
 
-    if (!CreateContext())
-        return false;
+    if (CTlsResult r = CreateContext(); !r)
+        return r;
 
-    if (!SetVersions())
-        return false;
+    if (CTlsResult r = SetVersions(); !r)
+        return r;
 
-    if (!CreateSSL(tcpClient.ServerSocket()))
-        return false;
+    if (CTlsResult r = CreateSSL(tcpClient.Socket()); !r)
+        return r;
 
-    if (!Connect())
-        return false;
+    if (CTlsResult r = Connect(); !r)
+        return r;
 
-    if (!LoadVerifyLocations())
-        return false;
+    if (CTlsResult r = LoadVerifyLocations(); !r)
+        return r;
 
-    if (!VerifyCertification())
-        return false;
+    if (CTlsResult r = VerifyCertification(); !r)
+        return r;
 
-    return true;
+    return CTlsResult();
 }
 //----------------------------------------------------------------------------
 
@@ -211,62 +216,64 @@ void COpenSSL_Client::Initialize()
 }
 //----------------------------------------------------------------------------
 
-bool COpenSSL_Client::CreateContext()
+CTlsResult COpenSSL_Client::CreateContext()
 {
     SHOWFUNC("COpenSSL_Client")
 
     SHOW("  - TLS_client_method")
     m_CTX = SSL_CTX_new(TLS_client_method());
     if (!m_CTX)
-        return SetLastError("Unable to create SSL context.");
+        return SetLastError(tlse_SSL_CTX_new);
 
-    return true;
+    return CTlsResult();
 }
 //----------------------------------------------------------------------------
 
-bool COpenSSL_Client::SetVersions()
+CTlsResult COpenSSL_Client::SetVersions()
 {
     SHOWFUNC("COpenSSL_Client")
 
     SHOW("  - SSL_CTX_set_min_proto_version")
     if (SSL_CTX_set_min_proto_version(m_CTX, m_TLS_MinVersion) == 0)
-        return SetLastError("Unable to set min proto version.");
+        return SetLastError(tlse_SSL_CTX_set_min_proto_version);
 
     SHOW("  - SSL_CTX_set_max_proto_version")
     if (SSL_CTX_set_max_proto_version(m_CTX, m_TLS_MaxVersion) == 0)
-        return SetLastError("Unable to set max proto version.");
+        return SetLastError(tlse_SSL_CTX_set_max_proto_version);
 
-    return true;
+    return CTlsResult();
 }
 //----------------------------------------------------------------------------
 
-bool COpenSSL_Client::CreateSSL(int fd)
+CTlsResult COpenSSL_Client::CreateSSL(int fd)
 {
     SHOWFUNC("COpenSSL_Client")
 
     SHOW("  - SSL_new")
     m_SSL = SSL_new(m_CTX);
+    if (!m_SSL)
+        return SetLastError(tlse_SSL_new);
     SHOW("  - SSL_set_fd")
     if (SSL_set_fd(m_SSL, fd) == 0)
-        return SetLastError("SSL_set_fd failed.");
-    return true;
+        return SetLastError(tlse_SSL_set_fd);
+    return CTlsResult();
 }
 //----------------------------------------------------------------------------
 
-bool COpenSSL_Client::DisplayCerts()
+CTlsResult COpenSSL_Client::DisplayCerts()
 {
     SHOWFUNC("COpenSSL_Client")
 
     SHOW("  - SSL_get_peer_certificate")
     X509* cert = SSL_get_peer_certificate(m_SSL);
     if (!cert)
-        return SetLastError("SSL_set_fd SSL_get_peer_certificate failed.");
+        return SetLastError(tlse_SSL_get_peer_certificate);
     CSSLGuard x509Guard(cert);
 
     SHOW("  - X509_get_subject_name")
     char* subject = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
     if (!subject)
-        return SetLastError("X509_get_subject_name failed.");
+        return SetLastError(tlse_X509_get_subject_name);
     CSSLGuard subjectQuard(subject);
 
     std::cout << "  = X509_subject_name: " << subject << std::endl;
@@ -274,50 +281,35 @@ bool COpenSSL_Client::DisplayCerts()
     SHOW("  - X509_get_issuer_name")
     char* issuer = X509_NAME_oneline(X509_get_issuer_name(cert), 0, 0);
     if (!issuer)
-        return SetLastError("X509_get_issuer_name failed.");
+        return SetLastError(tlse_X509_get_issuer_name);
     CSSLGuard issuerQuard(issuer);
 
     std::cout << "  = X509_issuer_name: " << issuer << std::endl;
 
-    return true;
+    return CTlsResult();
 }
 //----------------------------------------------------------------------------
 
-bool COpenSSL_Client::Connect()
+CTlsResult COpenSSL_Client::Connect()
 {
     SHOWFUNC("COpenSSL_Client")
 
     SHOW("  - SSL_connect")
     int ret = SSL_connect(m_SSL);
     if (ret > 0)
-        return true;
+        return CTlsResult();
 
     std::string s1 = CSSL_GetError::Reason(m_SSL, ret);
     s1 += "\n";
     s1 += getOpenSSLError();
-    return SetLastError("SSL_connect failed.", s1);
+    return SetLastError(tlse_SSL_connect, s1);
 }
 //----------------------------------------------------------------------------
 
-void COpenSSL_Client::Disconnect()
+CTlsResult COpenSSL_Client::Shutdown()
 {
-    if (m_SSL)
-    {
-//        SHOW("  - SSL_shutdown")
-//        int status = SSL_shutdown(m_SSL);
+    SHOWFUNC("COpenSSL_Client")
 
-        SHOW("  - SSL_free")
-        SSL_free(m_SSL);
-        SHOW("  - SSL_CTX_free")
-        SSL_CTX_free(m_CTX);
-
-        m_SSL = nullptr;
-    }
-}
-//----------------------------------------------------------------------------
-
-void COpenSSL_Client::Shutdown()
-{
     if (m_SSL)
     {
         SHOW("  - SSL_shutdown")
@@ -327,27 +319,47 @@ void COpenSSL_Client::Shutdown()
         {
             std::string s = CSSL_GetError::Reason(m_SSL, status);
             if (!s.empty())
-                SetLastError("SSL_shutdown failed.", s);
+                return SetLastError(tlse_SSL_shutdown, s);
             else
-                SetLastError("SSL_shutdown failed.");
+                return SetLastError(tlse_SSL_shutdown);
         }
+    }
+
+    return CTlsResult();
+}
+//----------------------------------------------------------------------------
+
+void COpenSSL_Client::Free()
+{
+    if (m_SSL)
+    {
+        SHOW("  - SSL_free")
+        SSL_free(m_SSL);
+        m_SSL = nullptr;
+    }
+
+    if (m_CTX)
+    {
+        SHOW("  - SSL_CTX_free")
+        SSL_CTX_free(m_CTX);
+        m_CTX = nullptr;
     }
 }
 //----------------------------------------------------------------------------
 
-bool COpenSSL_Client::LoadVerifyLocations()
+CTlsResult COpenSSL_Client::LoadVerifyLocations()
 {
     SHOWFUNC("COpenSSL_Client")
 
     SHOW("  - SSL_CTX_load_verify_locations")
     if (int r = SSL_CTX_load_verify_locations(
             m_CTX, m_Certificate.c_str(), nullptr); r != 1)
-        return SetLastError("SSL_CTX_load_verify_locations failed.");
-    return true;
+        return SetLastError(tlse_SSL_CTX_load_verify_locations);
+    return CTlsResult();
 }
 //----------------------------------------------------------------------------
 
-bool COpenSSL_Client::VerifyCertification()
+CTlsResult COpenSSL_Client::VerifyCertification()
 {
     SHOWFUNC("COpenSSL_Client")
 
@@ -358,14 +370,14 @@ bool COpenSSL_Client::VerifyCertification()
     if (int r = SSL_get_verify_result(m_SSL); r != X509_V_OK)
     {
         return SetLastError(
-            "SSL_get_verify_result failed.",
+            tlse_SSL_get_verify_result,
             X509_verify_cert_error_string(SSL_get_verify_result(m_SSL)));
     }
-    return true;
+    return CTlsResult();
 }
 //----------------------------------------------------------------------------
 
-bool COpenSSL_Client::Write(std::string_view message)
+CTlsResult COpenSSL_Client::Write(std::string_view message)
 {
     SHOWFUNC("COpenSSL_Client")
 
@@ -378,13 +390,13 @@ bool COpenSSL_Client::Write(std::string_view message)
     SHOW("  - SSL_write")
     int ret = SSL_write(m_SSL, message.data(), message.size());
     if (ret > 0)
-        return true;
+        return CTlsResult();
 
     std::string s = CSSL_GetError::Reason(m_SSL, ret);
     if (!s.empty())
-        return SetLastError("SSL_write failed.", s);
+        return SetLastError(tlse_SSL_write, s);
     else
-        return SetLastError("SSL_write failed.");
+        return SetLastError(tlse_SSL_write);
 }
 //----------------------------------------------------------------------------
 
@@ -404,12 +416,10 @@ int COpenSSL_Client::Read(std::string& message)
 }
 //----------------------------------------------------------------------------
 
-bool COpenSSL_Client::SetLastError(
-    const std::string& caption, const std::string& msg)
+CTlsResult COpenSSL_Client::SetLastError(
+    int errCode, const std::string& msg)
 {
-    m_LastError.Caption = caption;
-    m_LastError.Message = msg;
-    return false;
+    return CTlsResult(errCode, msg);
 }
 //----------------------------------------------------------------------------
 

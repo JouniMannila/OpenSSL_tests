@@ -16,8 +16,23 @@
 
 #include <string>
 
-#include "Error.h"
+#ifndef TlsResultH
+#   include "TlsResult.h"
+#endif
+#ifndef ErrorH
+#   include "Error.h"
+#endif
 //---------------------------------------------------------------------------
+
+using QMemoWriter = void (*)(void* _this, const std::string& text);
+
+struct CFuncPtr {
+  void* This {};
+  QMemoWriter Func {};
+};
+
+extern CFuncPtr g_MemoWriter;
+
 
 namespace ztls {
 
@@ -33,6 +48,8 @@ namespace ztls {
 class CTcpClient {
   public:
     CTcpClient() = default;
+
+    /// Constructor, joka asettaa serverin osoitteen ja portin.
     CTcpClient(const std::string& address, int portNo)
       : m_Address(address), m_PortNo(portNo) {}
 
@@ -41,50 +58,54 @@ class CTcpClient {
     CTcpClient(const CTcpClient&) = delete;
     CTcpClient& operator=(const CTcpClient&) = delete;
 
-    ///
+    /// Asetetaa serverin portin numeron.
     void SetPortNo(int portNo)
         { m_PortNo = portNo; }
 
-    ///
+    /// Asettaa serverin osoitteen.
     void SetAddress(const std::string& address)
         { m_Address = address; }
 
     /// Palauttaa Connect() metodissa luodun socket:in.
-    int ServerSocket() const
-        { return m_ServerSocket; }
+    SOCKET Socket() const
+        { return m_Socket; }
 
-    ///
-    void SetTimeout(DWORD timeout);
+    /// Asettaa ...
+    void SetReadTimeout(DWORD timeout);
 
-    ///
-    bool Connect();
+    /// Luo socketin kutsumalla socket() ja yritt‰‰ kytkeyty‰ serveriin
+    /// kutsumalla connect().
+    CTlsResult Connect();
 
-    ///
+    /// Jos ollaan kytkeytyneen‰ serveriin, irtikytkeydyt‰‰n kutsumalla
+    /// closesocket(), ja jos WSAStartup() kutsuttu aiemmin, siivotaan nyt
+    /// kutsumalla WSACleanup().
     void Disconnect();
 
-    /// Palautaa edelliseen virheeseen liittyv‰n tekstin.
-    CError GetLastError() const
-        { return m_LastError; }
+//    /// Palautaa edelliseen virheeseen liittyv‰n tekstin.
+//    CTlsResult GetLastError() const
+//        { return m_LastResult; }
 
   private:
     int m_PortNo {};
     std::string m_Address {};
 
-    int m_ServerSocket {};
+    SOCKET m_Socket { INVALID_SOCKET };
 
+    // tallettaa tietoa siit‰, onko WSAStartup() kutsuttu.
     bool m_WSAStartupCalled {};
 
-    CError m_LastError {};
+//    CTlsResult m_LastResult {};
 
     /// Kutsuu WSAStartup.
-    bool Initialize();
+    CTlsResult Initialize();
 
     /// Luo TCP-socket:in ja yritt‰‰ kytkeyty‰ serveriin. Luodun Socket:in
-    /// arvo tallettuu m_ServerSocket:iin.
-    bool DoConnect();
+    /// arvo tallettuu m_Socket:iin.
+    CTlsResult DoConnect();
 
     /// Asettaa viimeisen virheen tekstin ja palauttaa aina false.
-    bool SetLastError(const std::string& caption, const std::string& msg="");
+    CTlsResult SetLastError(int errCode, const std::string& msg="");
 };
 
 
@@ -127,37 +148,37 @@ class COpenSSL_Client {
     void Initialize();
 
     ///
-    bool CreateContext();
+    CTlsResult CreateContext();
 
     ///
-    bool SetVersions();
+    CTlsResult SetVersions();
 
     ///
-    bool CreateSSL(int serverSocket);
+    CTlsResult CreateSSL(int serverSocket);
 
     ///
-    bool DisplayCerts();
+    CTlsResult DisplayCerts();
 
     ///
-    bool Connect();
+    CTlsResult Connect();
 
     ///
-    void Disconnect();
+    CTlsResult Shutdown();
 
     ///
-    void Shutdown();
+    void Free();
 
     ///
-    bool LoadVerifyLocations();
+    CTlsResult LoadVerifyLocations();
 
     ///
-    bool VerifyCertification();
+    CTlsResult VerifyCertification();
 
     ///
-    bool MakeConnection(CTcpClient&);
+    CTlsResult MakeConnection(CTcpClient&);
 
     ///
-    bool Write(std::string_view message);
+    CTlsResult Write(std::string_view message);
 
     ///
     int Read(std::string& message);
@@ -177,8 +198,8 @@ class COpenSSL_Client {
 
     CError m_LastError {};
 
-    bool SetLastError(
-        const std::string& caption, const std::string& msg=getOpenSSLError());
+    CTlsResult SetLastError(
+        int errCode, const std::string& msg=getOpenSSLError());
 };
 
 }

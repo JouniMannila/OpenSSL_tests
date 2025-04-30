@@ -81,7 +81,6 @@ __published:	// IDE-managed Components
   TBitBtn *butConnect;
   TBitBtn *butSend;
   TTimer *timer;
-  void __fastcall FormShow(TObject *Sender);
   void __fastcall butConnectClick(TObject *Sender);
   void __fastcall butSendClick(TObject *Sender);
   void __fastcall timerTimer(TObject *Sender);
@@ -98,10 +97,12 @@ private:	// User declarations
   bool __fastcall Connect();
   void __fastcall Disconnect();
 
-  bool __fastcall ShowError(const ztls::CError&);
+  bool __fastcall ShowError(const ztls::CTlsResult&);
 
   void __fastcall OnNewMessage();
   void __fastcall OnCloseNotify();
+
+  static void MemoWriter(void* _this, const std::string& text);
 
 public:		// User declarations
   __fastcall TformMain(TComponent* Owner);
