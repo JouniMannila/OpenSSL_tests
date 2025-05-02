@@ -210,7 +210,7 @@ bool __fastcall TformMain::Connect()
     m_AcceptThread =
         std::make_unique<CAcceptThread>(m_TcpServer.get(), OnAccepted);
 
-    // luodaan thread lukemaan vaataanotettua dataa
+    // luodaan thread lukemaan vastaanotettua dataa
     m_ReadThread = std::make_unique<CReadThread>(m_SslServer.get(), OnNewData);
 
     timer->Enabled = true;

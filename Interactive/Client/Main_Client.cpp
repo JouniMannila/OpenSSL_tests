@@ -45,92 +45,92 @@ const char* CERTIFICATE = "certs/hedsam.crt";
 #endif
 
 
-//***************************************************************************
+////***************************************************************************
+////
+//// class CClientThread
+//// ----- -------------
+////***************************************************************************
 //
-// class CClientThread
-// ----- -------------
-//***************************************************************************
-
-CClientThread::CClientThread(
-    ztls::COpenSSL_Client* client, CNewMessage messageCb, CCloseNotify closeCb)
-  : TThread(false)
-  , m_Client(client)
-  , m_NewMessageCb(messageCb)
-  , m_CloseNotifyCb(closeCb)
-{
-}
-//----------------------------------------------------------------------------
-
-bool __fastcall CClientThread::Empty()
-{
-    std::lock_guard<std::mutex> lock(m_Mutex);
-    return m_Deque.empty();
-}
-//----------------------------------------------------------------------------
-
-std::string __fastcall CClientThread::Fetch()
-{
-    std::lock_guard<std::mutex> lock(m_Mutex);
-
-    if (m_Deque.empty())
-        return std::string();
-
-    std::string s = m_Deque.front();
-    m_Deque.pop_front();
-    return s;
-}
-//----------------------------------------------------------------------------
-
-void __fastcall CClientThread::Execute()
-{
-    while (!Terminated)
-    {
-        std::string message;
-        int bytes = m_Client->Read(message);
-
-        if (bytes <= 0)
-        {
-            int err = SSL_get_error(m_Client->GetSSL(), bytes);
-            if (err == SSL_ERROR_ZERO_RETURN) // close_notify
-            {
-                if (m_CloseNotifyCb)
-                    m_CloseNotifyCb();
-            }
-            else if (err == SSL_ERROR_SYSCALL)
-            {
-                // timeout or network error
-            }
-            else if (err == SSL_ERROR_WANT_READ)
-            {
-            }
-            else if (err == SSL_ERROR_WANT_WRITE)
-            {
-            }
-            else
-            {
-                std::string s =
-                    ztls::CSSL_GetError::Reason(m_Client->GetSSL(), bytes);
-            }
-        }
-
-        else
-        {
-            Push(message);
-            if (m_NewMessageCb)
-                m_NewMessageCb();
-        }
-
-        Sleep(100);
-    }
-}
-//----------------------------------------------------------------------------
-
-void CClientThread::Push(const std::string& message)
-{
-    std::lock_guard<std::mutex> lock(m_Mutex);
-    m_Deque.push_back(message);
-}
-//----------------------------------------------------------------------------
+//CClientThread::CClientThread(
+//    ztls::COpenSSL_Client* client, CNewMessage messageCb, CCloseNotify closeCb)
+//  : TThread(false)
+//  , m_Client(client)
+//  , m_NewMessageCb(messageCb)
+//  , m_CloseNotifyCb(closeCb)
+//{
+//}
+////----------------------------------------------------------------------------
+//
+//bool __fastcall CClientThread::Empty()
+//{
+//    std::lock_guard<std::mutex> lock(m_Mutex);
+//    return m_Deque.empty();
+//}
+////----------------------------------------------------------------------------
+//
+//std::string __fastcall CClientThread::Fetch()
+//{
+//    std::lock_guard<std::mutex> lock(m_Mutex);
+//
+//    if (m_Deque.empty())
+//        return std::string();
+//
+//    std::string s = m_Deque.front();
+//    m_Deque.pop_front();
+//    return s;
+//}
+////----------------------------------------------------------------------------
+//
+//void __fastcall CClientThread::Execute()
+//{
+//    while (!Terminated)
+//    {
+//        std::string message;
+//        int bytes = m_Client->Read(message);
+//
+//        if (bytes <= 0)
+//        {
+//            int err = SSL_get_error(m_Client->GetSSL(), bytes);
+//            if (err == SSL_ERROR_ZERO_RETURN) // close_notify
+//            {
+//                if (m_CloseNotifyCb)
+//                    m_CloseNotifyCb();
+//            }
+//            else if (err == SSL_ERROR_SYSCALL)
+//            {
+//                // timeout or network error
+//            }
+//            else if (err == SSL_ERROR_WANT_READ)
+//            {
+//            }
+//            else if (err == SSL_ERROR_WANT_WRITE)
+//            {
+//            }
+//            else
+//            {
+//                std::string s =
+//                    ztls::CSSL_GetError::Reason(m_Client->GetSSL(), bytes);
+//            }
+//        }
+//
+//        else
+//        {
+//            Push(message);
+//            if (m_NewMessageCb)
+//                m_NewMessageCb();
+//        }
+//
+//        Sleep(100);
+//    }
+//}
+////----------------------------------------------------------------------------
+//
+//void CClientThread::Push(const std::string& message)
+//{
+//    std::lock_guard<std::mutex> lock(m_Mutex);
+//    m_Deque.push_back(message);
+//}
+////----------------------------------------------------------------------------
 
 
 //***************************************************************************
@@ -145,16 +145,22 @@ __fastcall TformMain::TformMain(TComponent* Owner)
     g_MemoWriter.Func = MemoWriter;
     g_MemoWriter.This = this;
 
-    m_TcpClient = std::make_unique<ztls::CTcpClient>(ADDRESS, PORTNO);
+    m_TlsClient = std::make_unique<ztls::CTlsClient>(
+        AnsiString(edAddress->Text).c_str(), udPort->Position, CERTIFICATE);
+    m_TlsClient->SetNewMessageCallback(OnNewMessage);
+    m_TlsClient->SetCloseNotifyCallback(OnCloseNotify);
+    m_TlsClient->SetErrorCallback(OnError);
 
-    m_SslClient = std::make_unique<ztls::COpenSSL_Client>();
-    m_SslClient->SetCertificate(CERTIFICATE);
+//    m_TcpClient = std::make_unique<ztls::CTcpClient>(ADDRESS, PORTNO);
+//
+//    m_SslClient = std::make_unique<ztls::COpenSSL_Client>();
+//    m_SslClient->SetCertificate(CERTIFICATE);
 }
 //---------------------------------------------------------------------------
 
 __fastcall TformMain::~TformMain()
 {
-    Disconnect();
+//    Disconnect();
 }
 //----------------------------------------------------------------------------
 
@@ -172,8 +178,11 @@ void __fastcall TformMain::butSendClick(TObject *Sender)
     if (!m_Connected)
         return;
 
-    if (ztls::CTlsResult r = m_SslClient->Write("Hello from the client!"); !r)
+    if (ztls::CTlsResult r = m_TlsClient->Write("Hello from the client!\n\r"); !r)
+    {
         ShowError(r);
+        Disconnect();
+    }
 }
 //---------------------------------------------------------------------------
 
@@ -182,21 +191,30 @@ void __fastcall TformMain::timerTimer(TObject *Sender)
     if (!m_Connected)
         return;
 
-    if (std::exchange(m_CloseNotified, false))
+    if (std::exchange(m_IsError, false))
     {
-        memo->Lines->Add("### Close notified");
+        memo->Lines->Add("### Error");
         Disconnect();
+        Connect();
     }
 
-    if (std::exchange(m_NewMessage, false))
+    else if (std::exchange(m_CloseNotified, false))
     {
-        if (m_ClientThread->Empty())
+        memo->Lines->Add("### Close notified");
+//        Disconnect();
+    }
+
+    else if (std::exchange(m_NewMessage, false))
+    {
+        if (!m_TlsClient->HasMessages())
             return;
 
-        memo->Lines->Add("### New Message");
-        std::string message = m_ClientThread->Fetch();
-
-        memo->Lines->Add(AnsiString("->") + message.c_str());
+        while (m_TlsClient->HasMessages())
+        {
+            memo->Lines->Add("### New Message");
+            std::string message = m_TlsClient->Fetch();
+            memo->Lines->Add(AnsiString("->") + message.c_str());
+        }
     }
 }
 //---------------------------------------------------------------------------
@@ -205,37 +223,15 @@ bool __fastcall TformMain::Connect()
 {
     using namespace ztls;
 
-    memo->Lines->Add("### Connect");
+    m_TlsClient->SetAddress(AnsiString(edAddress->Text).c_str());
+    m_TlsClient->SetPortNo(udPort->Position);
 
-    if (CTlsResult r = m_TcpClient->Connect(); !r)
+    m_TlsClient->SetReadTimeout(5000);
+
+    if (CTlsResult r = m_TlsClient->Connect(); !r)
         return ShowError(r);
 
-    m_TcpClient->SetReadTimeout(5000);
-
-    if (CTlsResult r = m_SslClient->CreateContext(); !r)
-        return ShowError(r);
-
-    if (CTlsResult r = m_SslClient->SetVersions(); !r)
-        return ShowError(r);
-
-    if (CTlsResult r = m_SslClient->CreateSSL(m_TcpClient->Socket()); !r)
-        return ShowError(r);
-
-    if (CTlsResult r = m_SslClient->Connect(); !r)
-        return ShowError(r);
-
-    if (CTlsResult r = m_SslClient->LoadVerifyLocations(); !r)
-        return ShowError(r);
-
-//    if (CTlsResult r = sslClient.VerifyCertification(); !r)
-//        return showError(r);
-
-//    if (CTlsResult r = m_SslClient->MakeConnection(*m_TcpClient); !r)
-//        return ShowError(r);
-
-    // luodaan thread lukemaan vaataanotettua dataa
-    m_ClientThread = std::make_unique<CClientThread>(
-        m_SslClient.get(), OnNewMessage, OnCloseNotify);
+    m_TlsClient->Write("\n\rHalloota!\n\r");
 
     timer->Enabled = true;
 
@@ -255,22 +251,10 @@ void __fastcall TformMain::Disconnect()
 
     memo->Lines->Add("### Disconnect");
 
+//    if (CTlsResult r = m_TlsClient->Disconnect(); !r)
+//        ;
+
     timer->Enabled = false;
-
-    if (CTlsResult r = m_SslClient->Shutdown(); !r)
-        ShowError(r);
-
-    m_TcpClient->Disconnect();
-    m_SslClient->Free();
-
-    if (m_ClientThread)
-    {
-        // terminoidaan thread
-        m_ClientThread->Terminate();
-
-        // odotetaan thredin päättymistä
-        m_ClientThread->WaitFor();
-    }
 
     m_Connected = false;
     butConnect->Caption = "Connect";
@@ -285,15 +269,28 @@ bool __fastcall TformMain::ShowError(const ztls::CTlsResult& result)
 }
 //----------------------------------------------------------------------------
 
-void __fastcall TformMain::OnNewMessage()
+void TformMain::OnNewMessage()
 {
     m_NewMessage = true;
 }
 //----------------------------------------------------------------------------
 
-void __fastcall TformMain::OnCloseNotify()
+void TformMain::OnCloseNotify()
 {
     m_CloseNotified = true;
+}
+//----------------------------------------------------------------------------
+
+void TformMain::OnError(int errType, int errNo)
+{
+    std::string e =
+        "*** " + std::to_string(errType) + ":" + std::to_string(errNo);
+    memo->Lines->Add(e.c_str());
+
+    if (errType == SSL_ERROR_SYSCALL)
+    {
+        m_IsError = true;
+    }
 }
 //----------------------------------------------------------------------------
 

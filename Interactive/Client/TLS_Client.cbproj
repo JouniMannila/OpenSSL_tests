@@ -213,6 +213,10 @@
             <DependentOn>..\Common\Error.h</DependentOn>
             <BuildOrder>5</BuildOrder>
         </CppCompile>
+        <CppCompile Include="..\Common\TlsResult.cpp">
+            <DependentOn>..\Common\TlsResult.h</DependentOn>
+            <BuildOrder>7</BuildOrder>
+        </CppCompile>
         <FormResources Include="Main_Client.dfm"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>

@@ -19,49 +19,50 @@
 #include <Vcl.ExtCtrls.hpp>
 
 #include "OpenSSL_Client.h"
+#include <Vcl.ComCtrls.hpp>
 
 #include <queue>
 #include <mutex>
 //---------------------------------------------------------------------------
 
-typedef void __fastcall (__closure* CNewMessage)();
-typedef void __fastcall (__closure* CCloseNotify)();
-
-//***************************************************************************
+//typedef void __fastcall (__closure* CNewMessage)();
+//typedef void __fastcall (__closure* CCloseNotify)();
 //
-// class CClientThread
-// ----- --------------
-//***************************************************************************
-
-/*!
- */
-
-class CClientThread : public TThread {
-  public:
-    CClientThread(ztls::COpenSSL_Client*, CNewMessage, CCloseNotify);
-
-    /// Palauttaa tiedon siitä, onko vastaanottojono tyhjä.
-    bool __fastcall Empty();
-
-    /// Lukee ja poistaa vanhimman viestin jonosta.
-    std::string __fastcall Fetch();
-
-  private:
-    ztls::COpenSSL_Client* m_Client {};
-
-    std::mutex m_Mutex {};
-
-    CNewMessage m_NewMessageCb { nullptr };
-    CCloseNotify m_CloseNotifyCb { nullptr };
-
-    std::deque<std::string> m_Deque {};
-
-    // thread:in suorittava looppi
-    void __fastcall Execute();
-
-    // kopioi viestin jonoon mutex:in sisällä
-    void __fastcall Push(const std::string& message);
-};
+////***************************************************************************
+////
+//// class CClientThread
+//// ----- --------------
+////***************************************************************************
+//
+///*!
+// */
+//
+//class CClientThread : public TThread {
+//  public:
+//    CClientThread(ztls::COpenSSL_Client*, CNewMessage, CCloseNotify);
+//
+//    /// Palauttaa tiedon siitä, onko vastaanottojono tyhjä.
+//    bool __fastcall Empty();
+//
+//    /// Lukee ja poistaa vanhimman viestin jonosta.
+//    std::string __fastcall Fetch();
+//
+//  private:
+//    ztls::COpenSSL_Client* m_Client {};
+//
+//    std::mutex m_Mutex {};
+//
+//    CNewMessage m_NewMessageCb { nullptr };
+//    CCloseNotify m_CloseNotifyCb { nullptr };
+//
+//    std::deque<std::string> m_Deque {};
+//
+//    // thread:in suorittava looppi
+//    void __fastcall Execute();
+//
+//    // kopioi viestin jonoon mutex:in sisällä
+//    void __fastcall Push(const std::string& message);
+//};
 
 
 //***************************************************************************
@@ -81,26 +82,35 @@ __published:	// IDE-managed Components
   TBitBtn *butConnect;
   TBitBtn *butSend;
   TTimer *timer;
+  TEdit *edAddress;
+  TLabel *lblAdddress;
+  TLabel *lblPort;
+  TEdit *edPort;
+  TUpDown *udPort;
   void __fastcall butConnectClick(TObject *Sender);
   void __fastcall butSendClick(TObject *Sender);
   void __fastcall timerTimer(TObject *Sender);
 
 private:	// User declarations
-  std::unique_ptr<ztls::CTcpClient> m_TcpClient {};
-  std::unique_ptr<ztls::COpenSSL_Client> m_SslClient {};
-  std::unique_ptr<CClientThread> m_ClientThread {};
+//  std::unique_ptr<ztls::CTcpClient> m_TcpClient {};
+//  std::unique_ptr<ztls::COpenSSL_Client> m_SslClient {};
+//  std::unique_ptr<CClientThread> m_ClientThread {};
+
+  std::unique_ptr<ztls::CTlsClient> m_TlsClient {};
 
   bool m_Connected {};
   bool m_NewMessage {};
   bool m_CloseNotified {};
+  bool m_IsError {};
 
   bool __fastcall Connect();
   void __fastcall Disconnect();
 
   bool __fastcall ShowError(const ztls::CTlsResult&);
 
-  void __fastcall OnNewMessage();
-  void __fastcall OnCloseNotify();
+  void OnNewMessage();
+  void OnCloseNotify();
+  void OnError(int errType, int errNo);
 
   static void MemoWriter(void* _this, const std::string& text);
 

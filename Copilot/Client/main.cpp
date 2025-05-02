@@ -22,8 +22,10 @@
 // lantronix
 // PORTNO = 10001, ADDRESS = "172.20.221.88"
 
-const int PORTNO = 12350;
-const char* ADDRESS = "127.0.0.1";
+const int PORTNO = 10001;
+const char* ADDRESS = "172.20.221.88";
+//const int PORTNO = 12350;
+//const char* ADDRESS = "127.0.0.1";
 
 //const char* CERTIFICATE = "certs/jounin-ca.crt";
 const char* CERTIFICATE = "certs/hedsam.crt";

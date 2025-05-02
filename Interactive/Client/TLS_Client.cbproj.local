@@ -1,26 +1,29 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
 	<Transactions>
-    <Transaction>1899/12/30 00.00.00.000.289,C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Unit1.h=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Main.h</Transaction>
     <Transaction>1899/12/30 00.00.00.000.784,=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\libssl.lib</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.223,C:\Documents\Embarcadero\Studio\Projects\Project1PCH1.h=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\TLS_ClientPCH1.h</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.098,=C:\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.289,C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Unit1.cpp=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Main.cpp</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.235,C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Main_Client.dfm=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Main.dfm</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.637,C:\@SOFTWARE\TestProjects\OpenSSL\Interactive\Common\CriticalSection.cpp=</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.802,=C:\@SOFTWARE\TestProjects\OpenSSL\Interactive\Common\CriticalSection.cpp</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.344,=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Common\Error.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.232,C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Unit1.h=C:\Documents\Embarcadero\Studio\Projects\Unit1.h</Transaction>
     <Transaction>1899/12/30 00.00.00.000.774,=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\libcrypto.lib</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.232,C:\Documents\Embarcadero\Studio\Projects\Unit1.dfm=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Unit1.dfm</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.235,C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Main_Client.h=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Main.h</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.289,C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Unit1.dfm=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Main.dfm</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.235,C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Main_Client.cpp=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Main.cpp</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.232,C:\Documents\Embarcadero\Studio\Projects\Unit1.cpp=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Unit1.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.235,C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Main.h=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Main_Client.h</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.098,=C:\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.609,C:\@SOFTWARE\TestProjects\OpenSSL\Interactive\Common\TlsResult.cpp=C:\@SOFTWARE\TestProjects\OpenSSL\Interactive\Client\Unit1.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.802,=C:\@SOFTWARE\TestProjects\OpenSSL\Interactive\Common\CriticalSection.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.637,C:\@SOFTWARE\TestProjects\OpenSSL\Interactive\Common\CriticalSection.cpp=</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.242,C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\TLS_Client.cbproj=C:\Documents\Embarcadero\Studio\Projects\Project1.cbproj</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.235,C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Main.dfm=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Main_Client.dfm</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.289,C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Main.dfm=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Unit1.dfm</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.344,=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Common\Error.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.235,C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Main.cpp=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Main_Client.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.232,C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Unit1.dfm=C:\Documents\Embarcadero\Studio\Projects\Unit1.dfm</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.503,=C:\@SOFTWARE\TestProjects\OpenSSL\Interactive\Client\Unit1.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.609,C:\@SOFTWARE\TestProjects\OpenSSL\Interactive\Common\TlsResult.h=C:\@SOFTWARE\TestProjects\OpenSSL\Interactive\Client\Unit1.h</Transaction>
     <Transaction>1899/12/30 00.00.00.000.143,=C:\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.352,=F:\Hedsam\Test Projects\OpenSSL\Interactive\Client\libcrypto_omf.lib</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.360,=F:\Hedsam\Test Projects\OpenSSL\Interactive\Client\libssl_omf.lib</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.289,C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Main.cpp=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Unit1.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.223,C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\TLS_ClientPCH1.h=C:\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.232,C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Unit1.cpp=C:\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.289,C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Main.h=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Unit1.h</Transaction>
     <Transaction>1899/12/30 00.00.00.000.541,=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\OpenSSL_Client.cpp</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.232,C:\Documents\Embarcadero\Studio\Projects\Unit1.h=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\Unit1.h</Transaction>
-    <Transaction>1899/12/30 00.00.00.000.242,C:\Documents\Embarcadero\Studio\Projects\Project1.cbproj=C:\SOFTWARE\@@Hedsam\OpenSSL_tests\Interactive\Client\TLS_Client.cbproj</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.360,=F:\Hedsam\Test Projects\OpenSSL\Interactive\Client\libssl_omf.lib</Transaction>
+    <Transaction>1899/12/30 00.00.00.000.352,=F:\Hedsam\Test Projects\OpenSSL\Interactive\Client\libcrypto_omf.lib</Transaction>
   </Transactions>
 </BorlandProject>

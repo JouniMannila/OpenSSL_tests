@@ -22,6 +22,10 @@
 #ifndef ErrorH
 #   include "Error.h"
 #endif
+
+#include <deque>
+#include <mutex>
+#include <thread>
 //---------------------------------------------------------------------------
 
 using QMemoWriter = void (*)(void* _this, const std::string& text);
@@ -35,6 +39,10 @@ extern CFuncPtr g_MemoWriter;
 
 
 namespace ztls {
+
+typedef void (__closure* CNewMessageCb)();
+typedef void (__closure* CCloseNotifyCb)();
+typedef void (__closure* CErrorCb)(int errType, int errNo);
 
 //***************************************************************************
 //
@@ -82,10 +90,6 @@ class CTcpClient {
     /// kutsumalla WSACleanup().
     void Disconnect();
 
-//    /// Palautaa edelliseen virheeseen liittyv‰n tekstin.
-//    CTlsResult GetLastError() const
-//        { return m_LastResult; }
-
   private:
     int m_PortNo {};
     std::string m_Address {};
@@ -94,8 +98,6 @@ class CTcpClient {
 
     // tallettaa tietoa siit‰, onko WSAStartup() kutsuttu.
     bool m_WSAStartupCalled {};
-
-//    CTlsResult m_LastResult {};
 
     /// Kutsuu WSAStartup.
     CTlsResult Initialize();
@@ -200,6 +202,219 @@ class COpenSSL_Client {
 
     CTlsResult SetLastError(
         int errCode, const std::string& msg=getOpenSSLError());
+};
+
+
+
+//***************************************************************************
+//
+// class CMessageDeque
+// ----- -------------
+//***************************************************************************
+
+/*!
+ */
+
+class CMessageDeque {
+  public:
+    /// Palauttaa tiedon siit‰, onko vastaanottojono tyhj‰.
+    bool IsEmpty();
+
+    /// Palauttaa tiedon siit‰, montako viesti‰ deque sis‰lt‰‰.
+    size_t Count();
+
+    // kopioi viestin jonoon mutex:in sis‰ll‰
+    void Push(const std::string& message);
+
+    /// Lukee ja poistaa vanhimman viestin jonosta.
+    std::string Fetch();
+
+    ///
+    void Flush();
+
+  private:
+    std::mutex m_Mutex {};
+    std::deque<std::string> m_Deque {};
+};
+
+
+//***************************************************************************
+//
+// class CClientReadThread
+// ----- -----------------
+//***************************************************************************
+
+/*!
+ */
+
+class CClientReadThread : public TThread {
+  public:
+    CClientReadThread(
+        ztls::COpenSSL_Client*, CNewMessageCb, CCloseNotifyCb, CErrorCb);
+
+    /// Palauttaa tiedon siit‰, onko vastaanottojono tyhj‰.
+    bool __fastcall IsEmpty()
+        { return m_Deque.IsEmpty(); }
+
+    /// Lukee ja poistaa vanhimman viestin jonosta.
+    std::string __fastcall Fetch()
+        { return m_Deque.Fetch(); }
+
+    ///
+    void Flush()
+        { m_Deque.Flush(); }
+
+  private:
+    ztls::COpenSSL_Client* m_Client {};
+
+    CMessageDeque m_Deque {};
+
+    CNewMessageCb m_NewMessageCb { nullptr };
+    CCloseNotifyCb m_CloseNotifyCb { nullptr };
+    CErrorCb m_ErrorCb { nullptr };
+
+    // thread:in suorittava looppi
+    void __fastcall Execute();
+};
+
+
+//***************************************************************************
+//
+// class CTlsClientTimer
+// ----- ---------------
+//***************************************************************************
+
+/*!
+ */
+
+class CTlsClientTimer {
+  public:
+
+    void Start(int interval, std::function<void()> task);
+    void Stop();
+
+  private:
+    std::atomic<bool> m_Running {};
+    std::thread m_Worker {};
+};
+
+
+//***************************************************************************
+//
+// class CTlsClient
+// ----- ----------
+//***************************************************************************
+
+/*!
+ */
+
+class CTlsClient {
+  public:
+    CTlsClient() = default;
+
+    ///
+    explicit CTlsClient(
+        const std::string& address="", int portNo=0, const std::string& cert="")
+      : m_Address(address), m_PortNo(portNo), m_Certificate(cert) {}
+
+    ~CTlsClient();
+
+    CTlsClient(const CTlsClient&) = delete;
+    CTlsClient& operator=(const CTlsClient&) = delete;
+
+    /// Asetetaa serverin portin numeron.
+    void SetPortNo(int portNo)
+        { m_PortNo = portNo; }
+
+    /// Asettaa serverin osoitteen.
+    void SetAddress(const std::string& address)
+        { m_Address = address; }
+
+    /// Asettaa sertifikaatin.
+    void SetCertificate(const std::string& cert)
+        { m_Certificate = cert; }
+
+    /// Asettaa ...
+    void SetReadTimeout(DWORD timeout)
+        { m_ReadTimeout = timeout; }
+
+    ///
+    void SetMinVersion(int minVersion)
+        { m_TLS_MinVersion = minVersion; }
+
+    ///
+    void SetNewMessageCallback(CNewMessageCb cb)
+        { m_NewMessageCb = cb; }
+
+    ///
+    void SetCloseNotifyCallback(CCloseNotifyCb cb)
+        { m_CloseNotifyCb = cb; }
+
+    ///
+    void SetErrorCallback(CErrorCb cb)
+        { m_ErrorCb = cb; }
+
+    ///
+    SSL_CTX* GetCTX() const
+        { return m_SslClient ? m_SslClient->GetCTX() : nullptr; }
+
+    ///
+    SSL* GetSSL() const
+        { return m_SslClient ? m_SslClient->GetSSL() : nullptr; }
+
+    ///
+    bool HasMessages()
+        { return !m_Deque.IsEmpty(); }
+
+    ///
+    std::string Fetch()
+        { return m_Deque.Fetch(); }
+
+    ///
+    bool Connected() const
+        { return m_Connected; }
+
+    ///
+    CTlsResult Connect();
+
+    ///
+    CTlsResult Disconnect();
+
+    ///
+    CTlsResult Write(const std::string& message);
+
+  private:
+    int m_PortNo {};
+    std::string m_Address {};
+    std::string m_Certificate {};
+
+    DWORD m_ReadTimeout { 5000 };
+
+    int m_TLS_MinVersion { TLS1_VERSION };
+
+    std::unique_ptr<ztls::CTcpClient> m_TcpClient {};
+    std::unique_ptr<ztls::COpenSSL_Client> m_SslClient {};
+
+    std::unique_ptr<CClientReadThread> m_ReadThread {};
+
+    CTlsClientTimer m_Timer {};
+
+    CMessageDeque m_Deque {};
+
+    bool m_Connected {};
+    bool m_CloseNotified {};
+    bool m_RetryConnect {};
+    bool m_IsError {};
+
+    CNewMessageCb m_NewMessageCb { nullptr };
+    CCloseNotifyCb m_CloseNotifyCb{ nullptr };
+    CErrorCb m_ErrorCb{ nullptr };
+
+    void Timer();
+
+    void OnNewMessage();
+    void OnCloseNotify();
+    void OnError(int errType, int errNo);
 };
 
 }

@@ -331,6 +331,8 @@ CTlsResult COpenSSL_Client::Shutdown()
 
 void COpenSSL_Client::Free()
 {
+    SHOWFUNC("COpenSSL_Client")
+
     if (m_SSL)
     {
         SHOW("  - SSL_free")
@@ -392,11 +394,13 @@ CTlsResult COpenSSL_Client::Write(std::string_view message)
     if (ret > 0)
         return CTlsResult();
 
-    std::string s = CSSL_GetError::Reason(m_SSL, ret);
-    if (!s.empty())
-        return SetLastError(tlse_SSL_write, s);
-    else
-        return SetLastError(tlse_SSL_write);
+    return CTlsResult(tlse_SSL_write);
+
+//    std::string s = CSSL_GetError::Reason(m_SSL, ret);
+//    if (!s.empty())
+//        return SetLastError(tlse_SSL_write, s);
+//    else
+//        return SetLastError(tlse_SSL_write);
 }
 //----------------------------------------------------------------------------
 
@@ -420,6 +424,325 @@ CTlsResult COpenSSL_Client::SetLastError(
     int errCode, const std::string& msg)
 {
     return CTlsResult(errCode, msg);
+}
+//----------------------------------------------------------------------------
+
+
+//***************************************************************************
+//
+// class CMessageDeque
+// ----- -------------
+//***************************************************************************
+
+bool CMessageDeque::IsEmpty()
+{
+    std::lock_guard<std::mutex> lock(m_Mutex);
+    return m_Deque.empty();
+}
+//----------------------------------------------------------------------------
+
+size_t CMessageDeque::Count()
+{
+    std::lock_guard<std::mutex> lock(m_Mutex);
+    return m_Deque.size();
+}
+//----------------------------------------------------------------------------
+
+std::string CMessageDeque::Fetch()
+{
+    std::lock_guard<std::mutex> lock(m_Mutex);
+
+    if (m_Deque.empty())
+        return std::string();
+
+    std::string s = m_Deque.front();
+    m_Deque.pop_front();
+    return s;
+}
+//----------------------------------------------------------------------------
+
+void CMessageDeque::Push(const std::string& message)
+{
+    std::lock_guard<std::mutex> lock(m_Mutex);
+    m_Deque.push_back(message);
+}
+//----------------------------------------------------------------------------
+
+void CMessageDeque::Flush()
+{
+    std::lock_guard<std::mutex> lock(m_Mutex);
+    m_Deque.clear();
+}
+//----------------------------------------------------------------------------
+
+
+//***************************************************************************
+//
+// class CClientReadThread
+// ----- -----------------
+//***************************************************************************
+
+CClientReadThread::CClientReadThread(
+    ztls::COpenSSL_Client* client, CNewMessageCb messageCb,
+    CCloseNotifyCb closeCb, CErrorCb errorCb)
+  : TThread(false)
+  , m_Client(client)
+  , m_NewMessageCb(messageCb)
+  , m_CloseNotifyCb(closeCb)
+  , m_ErrorCb(errorCb)
+{
+}
+//----------------------------------------------------------------------------
+
+void __fastcall CClientReadThread::Execute()
+{
+    while (!Terminated)
+    {
+        std::string message;
+        int bytes = m_Client->Read(message);
+
+        if (bytes <= 0)
+        {
+            int err = SSL_get_error(m_Client->GetSSL(), bytes);
+
+            int errNo = WSAGetLastError();
+
+            if (err == SSL_ERROR_ZERO_RETURN) // close_notify
+            {
+                if (m_CloseNotifyCb)
+                    m_CloseNotifyCb();
+            }
+            else if (err == SSL_ERROR_WANT_READ
+                || (err == SSL_ERROR_SYSCALL && errNo == WSAETIMEDOUT))
+            {
+                // timeout
+            }
+            else
+            {
+                if (m_ErrorCb)
+                    m_ErrorCb(err, errNo);
+            }
+        }
+
+        else
+        {
+            m_Deque.Push(message);
+            if (m_NewMessageCb)
+                m_NewMessageCb();
+        }
+
+        Sleep(100);
+    }
+}
+//----------------------------------------------------------------------------
+
+
+//***************************************************************************
+//
+// class CTlsClientTimer
+// ----- ---------------
+//***************************************************************************
+
+void CTlsClientTimer::Start(int interval, std::function<void()> task)
+{
+    m_Running = true;
+    m_Worker = std::thread([=]() {
+      while (m_Running) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+        if (m_Running)
+            task();
+      }
+    });
+}
+//----------------------------------------------------------------------------
+
+void CTlsClientTimer::Stop()
+{
+    m_Running = false;
+    if (m_Worker.joinable())
+        m_Worker.join();
+}
+//----------------------------------------------------------------------------
+
+
+//***************************************************************************
+//
+// class CTlsClient
+// ----- ----------
+//***************************************************************************
+
+CTlsClient::~CTlsClient()
+{
+    Disconnect();
+}
+//----------------------------------------------------------------------------
+
+CTlsResult CTlsClient::Connect()
+{
+    using namespace ztls;
+
+    m_TcpClient = std::make_unique<ztls::CTcpClient>(m_Address, m_PortNo);
+
+    m_SslClient = std::make_unique<ztls::COpenSSL_Client>();
+    m_SslClient->SetCertificate(m_Certificate);
+    m_SslClient->SetMinVersion(m_TLS_MinVersion);
+
+    if (CTlsResult r = m_TcpClient->Connect(); !r)
+        return r;
+
+    if (m_ReadTimeout != 0)
+        m_TcpClient->SetReadTimeout(m_ReadTimeout);
+
+    if (CTlsResult r = m_SslClient->CreateContext(); !r)
+        return r;
+
+    if (CTlsResult r = m_SslClient->SetVersions(); !r)
+        return r;
+
+    if (CTlsResult r = m_SslClient->CreateSSL(m_TcpClient->Socket()); !r)
+        return r;
+
+    if (CTlsResult r = m_SslClient->Connect(); !r)
+        return r;
+
+    if (CTlsResult r = m_SslClient->LoadVerifyLocations(); !r)
+        return r;
+
+//    if (CTlsResult r = sslClient.VerifyCertification(); !r)
+//        return r;
+
+//    if (CTlsResult r = m_SslClient->MakeConnection(*m_TcpClient); !r)
+//        return r;
+
+    // luodaan thread lukemaan vaataanotettua dataa
+    m_ReadThread = std::make_unique<CClientReadThread>(
+        m_SslClient.get(), OnNewMessage, OnCloseNotify, OnError);
+
+    m_Timer.Start(1000, Timer);
+
+    m_Connected = true;
+
+    return CTlsResult();
+}
+//----------------------------------------------------------------------------
+
+CTlsResult CTlsClient::Disconnect()
+{
+    m_Timer.Stop();
+
+    if (!m_Connected)
+        return CTlsResult();
+
+    if (CTlsResult r = m_SslClient->Shutdown(); !r)
+        ;
+
+    m_TcpClient->Disconnect();
+    m_SslClient->Free();
+
+    if (m_ReadThread)
+    {
+        // terminoidaan thread
+        m_ReadThread->Terminate();
+
+        // odotetaan thredin päättymistä
+        m_ReadThread->WaitFor();
+    }
+
+    m_Connected = false;
+
+    return CTlsResult();
+}
+//----------------------------------------------------------------------------
+
+CTlsResult CTlsClient::Write(const std::string& message)
+{
+    if (CTlsResult r = m_SslClient->Write(message); !r)
+    {
+        int errNo = WSAGetLastError();
+
+        std::string e = "*** WriteError: " + std::to_string(errNo);
+        SHOW(e.c_str());
+
+//        if (errNo == WSAECONNRESET)  // 10054
+//        {
+//        }
+//        else if (errNo == WSAENETRESET)
+//        {
+//        }
+//        else
+//        {
+//        }
+
+        return r;
+    }
+
+    return CTlsResult();
+}
+//----------------------------------------------------------------------------
+
+void CTlsClient::Timer()
+{
+    if (std::exchange(m_IsError, false))
+    {
+        Disconnect();
+        m_RetryConnect = true;
+    }
+
+    else if (std::exchange(m_CloseNotified, false))
+    {
+        Disconnect();
+    }
+
+    else if (std::exchange(m_RetryConnect, false))
+    {
+        Connect();
+    }
+}
+//----------------------------------------------------------------------------
+
+void CTlsClient::OnNewMessage()
+{
+    assert(m_ReadThread);
+
+    while (!m_ReadThread->IsEmpty())
+        m_Deque.Push(m_ReadThread->Fetch());
+
+    if (m_NewMessageCb)
+        m_NewMessageCb();
+}
+//----------------------------------------------------------------------------
+
+void CTlsClient::OnCloseNotify()
+{
+    m_CloseNotified = true;
+    if (m_CloseNotifyCb)
+        m_CloseNotifyCb();
+}
+//----------------------------------------------------------------------------
+
+void CTlsClient::OnError(int errType, int errNo)
+{
+    if (errType == SSL_ERROR_SYSCALL)
+    {
+        SHOW("*** ReadError: SSL_ERROR_SYSCALL")
+    }
+    else if (errType == SSL_ERROR_WANT_READ)
+    {
+        SHOW("*** ReadError: SSL_ERROR_WANT_READ")
+    }
+    else if (errType == SSL_ERROR_WANT_WRITE)
+    {
+        SHOW("*** ReadError: SSL_ERROR_WANT_WRITE")
+    }
+    else
+    {
+        SHOW("*** ReadError: OTHER")
+    }
+
+    m_IsError = true;
+
+    if (m_ErrorCb)
+        m_ErrorCb(errType, errNo);
 }
 //----------------------------------------------------------------------------
 
