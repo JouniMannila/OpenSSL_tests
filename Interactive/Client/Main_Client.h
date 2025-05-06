@@ -25,9 +25,6 @@
 #include <mutex>
 //---------------------------------------------------------------------------
 
-//typedef void __fastcall (__closure* CNewMessage)();
-//typedef void __fastcall (__closure* CCloseNotify)();
-//
 ////***************************************************************************
 ////
 //// class CClientThread
@@ -65,6 +62,16 @@
 //};
 
 
+struct CStatusFlags {
+  bool Connected {};
+  bool Disconnected {};
+  bool NewMessage {};
+  bool CloseNotified {};
+  bool Error {};
+  bool TryConnect {};
+};
+
+
 //***************************************************************************
 //
 // class TformMain
@@ -92,27 +99,27 @@ __published:	// IDE-managed Components
   void __fastcall timerTimer(TObject *Sender);
 
 private:	// User declarations
-//  std::unique_ptr<ztls::CTcpClient> m_TcpClient {};
-//  std::unique_ptr<ztls::COpenSSL_Client> m_SslClient {};
-//  std::unique_ptr<CClientThread> m_ClientThread {};
-
   std::unique_ptr<ztls::CTlsClient> m_TlsClient {};
 
   bool m_Connected {};
-  bool m_NewMessage {};
-  bool m_CloseNotified {};
-  bool m_IsError {};
+  bool m_ConnectionFailed {};
+
+  int m_TryCounter {};
+
+  CStatusFlags m_Status {};
 
   bool __fastcall Connect();
-  void __fastcall Disconnect();
+  void __fastcall Disconnect(bool disableTimer=true);
 
   bool __fastcall ShowError(const ztls::CTlsResult&);
 
+  void OnConnected();
+  void OnDisconnected();
   void OnNewMessage();
   void OnCloseNotify();
-  void OnError(int errType, int errNo);
+  void OnError(int errType, int errNo, const std::string& source);
 
-  static void MemoWriter(void* _this, const std::string& text);
+  void OnDebugString(const std::string&);
 
 public:		// User declarations
   __fastcall TformMain(TComponent* Owner);

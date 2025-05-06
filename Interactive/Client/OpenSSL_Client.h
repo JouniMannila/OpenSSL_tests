@@ -28,21 +28,12 @@
 #include <thread>
 //---------------------------------------------------------------------------
 
-using QMemoWriter = void (*)(void* _this, const std::string& text);
-
-struct CFuncPtr {
-  void* This {};
-  QMemoWriter Func {};
-};
-
-extern CFuncPtr g_MemoWriter;
-
-
 namespace ztls {
 
-typedef void (__closure* CNewMessageCb)();
-typedef void (__closure* CCloseNotifyCb)();
-typedef void (__closure* CErrorCb)(int errType, int errNo);
+typedef void (__closure* CTlsEventCb)();
+typedef void (__closure* CTlsErrorCb)(
+    int errType, int errNo, const std::string& source);
+typedef void (__closure* CDebugStringCb)(const std::string&);
 
 //***************************************************************************
 //
@@ -74,6 +65,10 @@ class CTcpClient {
     void SetAddress(const std::string& address)
         { m_Address = address; }
 
+    ///
+    void SetDebugStringCallback(CDebugStringCb cb)
+        { m_DebugStringCb = cb; }
+
     /// Palauttaa Connect() metodissa luodun socket:in.
     SOCKET Socket() const
         { return m_Socket; }
@@ -99,6 +94,8 @@ class CTcpClient {
     // tallettaa tietoa siitä, onko WSAStartup() kutsuttu.
     bool m_WSAStartupCalled {};
 
+    CDebugStringCb m_DebugStringCb{ nullptr };
+
     /// Kutsuu WSAStartup.
     CTlsResult Initialize();
 
@@ -108,6 +105,9 @@ class CTcpClient {
 
     /// Asettaa viimeisen virheen tekstin ja palauttaa aina false.
     CTlsResult SetLastError(int errCode, const std::string& msg="");
+
+    void ShowFunc(const std::string& class_, const std::string& func);
+    void Show(const std::string&);
 };
 
 
@@ -137,6 +137,10 @@ class COpenSSL_Client {
     ///
     void SetMinVersion(int minVersion)
         { m_TLS_MinVersion = minVersion; }
+
+    ///
+    void SetDebugStringCallback(CDebugStringCb cb)
+        { m_DebugStringCb = cb; }
 
     ///
     SSL_CTX* GetCTX() const
@@ -180,7 +184,7 @@ class COpenSSL_Client {
     CTlsResult MakeConnection(CTcpClient&);
 
     ///
-    CTlsResult Write(std::string_view message);
+    CTlsResult Write(const std::string& message);
 
     ///
     int Read(std::string& message);
@@ -198,10 +202,15 @@ class COpenSSL_Client {
 
     std::string m_Certificate {};
 
+    CDebugStringCb m_DebugStringCb{ nullptr };
+
     CError m_LastError {};
 
     CTlsResult SetLastError(
         int errCode, const std::string& msg=getOpenSSLError());
+
+    void ShowFunc(const std::string& class_, const std::string& func);
+    void Show(const std::string& text);
 };
 
 
@@ -250,7 +259,7 @@ class CMessageDeque {
 class CClientReadThread : public TThread {
   public:
     CClientReadThread(
-        ztls::COpenSSL_Client*, CNewMessageCb, CCloseNotifyCb, CErrorCb);
+        ztls::COpenSSL_Client*, CTlsEventCb, CTlsEventCb, CTlsErrorCb);
 
     /// Palauttaa tiedon siitä, onko vastaanottojono tyhjä.
     bool __fastcall IsEmpty()
@@ -269,34 +278,34 @@ class CClientReadThread : public TThread {
 
     CMessageDeque m_Deque {};
 
-    CNewMessageCb m_NewMessageCb { nullptr };
-    CCloseNotifyCb m_CloseNotifyCb { nullptr };
-    CErrorCb m_ErrorCb { nullptr };
+    CTlsEventCb m_NewMessageCb { nullptr };
+    CTlsEventCb m_CloseNotifyCb { nullptr };
+    CTlsErrorCb m_ErrorCb { nullptr };
 
     // thread:in suorittava looppi
     void __fastcall Execute();
 };
 
 
-//***************************************************************************
+////***************************************************************************
+////
+//// class CTlsClientTimer
+//// ----- ---------------
+////***************************************************************************
 //
-// class CTlsClientTimer
-// ----- ---------------
-//***************************************************************************
-
-/*!
- */
-
-class CTlsClientTimer {
-  public:
-
-    void Start(int interval, std::function<void()> task);
-    void Stop();
-
-  private:
-    std::atomic<bool> m_Running {};
-    std::thread m_Worker {};
-};
+///*!
+// */
+//
+//class CTlsClientTimer {
+//  public:
+//
+//    void Start(int interval, std::function<void()> task);
+//    void Stop();
+//
+//  private:
+//    std::atomic<bool> m_Running {};
+//    std::thread m_Worker {};
+//};
 
 
 //***************************************************************************
@@ -343,16 +352,28 @@ class CTlsClient {
         { m_TLS_MinVersion = minVersion; }
 
     ///
-    void SetNewMessageCallback(CNewMessageCb cb)
+    void SetConnectedCallback(CTlsEventCb cb)
+        { m_ConnectedCb = cb; }
+
+    ///
+    void SetDisconnectedCallback(CTlsEventCb cb)
+        { m_DisconnectedCb = cb; }
+
+    ///
+    void SetNewMessageCallback(CTlsEventCb cb)
         { m_NewMessageCb = cb; }
 
     ///
-    void SetCloseNotifyCallback(CCloseNotifyCb cb)
+    void SetCloseNotifyCallback(CTlsEventCb cb)
         { m_CloseNotifyCb = cb; }
 
     ///
-    void SetErrorCallback(CErrorCb cb)
+    void SetErrorCallback(CTlsErrorCb cb)
         { m_ErrorCb = cb; }
+
+    ///
+    void SetDebugStringCallback(CDebugStringCb cb)
+        { m_DebugStringCb = cb; }
 
     ///
     SSL_CTX* GetCTX() const
@@ -397,24 +418,26 @@ class CTlsClient {
 
     std::unique_ptr<CClientReadThread> m_ReadThread {};
 
-    CTlsClientTimer m_Timer {};
-
     CMessageDeque m_Deque {};
 
     bool m_Connected {};
     bool m_CloseNotified {};
-    bool m_RetryConnect {};
     bool m_IsError {};
 
-    CNewMessageCb m_NewMessageCb { nullptr };
-    CCloseNotifyCb m_CloseNotifyCb{ nullptr };
-    CErrorCb m_ErrorCb{ nullptr };
+    CTlsEventCb m_ConnectedCb { nullptr };
+    CTlsEventCb m_DisconnectedCb { nullptr };
+    CTlsEventCb m_NewMessageCb { nullptr };
+    CTlsEventCb m_CloseNotifyCb{ nullptr };
+    CTlsErrorCb m_ErrorCb{ nullptr };
 
-    void Timer();
+    CDebugStringCb m_DebugStringCb{ nullptr };
 
     void OnNewMessage();
     void OnCloseNotify();
-    void OnError(int errType, int errNo);
+    void OnError(int errType, int errNo, const std::string& source);
+
+    void OnDebugString(const std::string&);
+    void DebugString(const std::string&);
 };
 
 }

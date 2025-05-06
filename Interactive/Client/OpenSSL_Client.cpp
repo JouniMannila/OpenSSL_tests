@@ -19,24 +19,11 @@
 
 #pragma package(smart_init)
 
-CFuncPtr g_MemoWriter {};
+//CFuncPtr g_MemoWriter {};
 
 #ifdef CONSOLE
-
   #define SHOWFUNC(class)  std::cout << class << "::" << __FUNC__ << std::endl;
   #define SHOW(text)  std::cout << text << std::endl;
-
-#else
-
-  #define SHOWFUNC(class) \
-    if (g_MemoWriter.Func) \
-      g_MemoWriter.Func( \
-        g_MemoWriter.This, std::string(class) + "::" + std::string(__FUNC__));
-
-  #define SHOW(text) \
-    if (g_MemoWriter.Func) \
-      g_MemoWriter.Func(g_MemoWriter.This, text);
-
 #endif
 
 
@@ -87,10 +74,10 @@ CTlsResult CTcpClient::Connect()
 
 CTlsResult CTcpClient::Initialize()
 {
-    SHOWFUNC("CTcpClient")
+    ShowFunc("CTcpClient", __FUNC__);
 
     WSADATA wsaData;
-    SHOW("  - WSAStartup")
+    Show("  - WSAStartup");
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
         return SetLastError(tlse_TCP_WSAStartup);
 
@@ -101,7 +88,7 @@ CTlsResult CTcpClient::Initialize()
 
 CTlsResult CTcpClient::DoConnect()
 {
-    SHOWFUNC("CTcpClient")
+    ShowFunc("CTcpClient", __FUNC__);
 
     if (m_PortNo == 0)
         return SetLastError(tlse_TCP_Port);
@@ -110,7 +97,7 @@ CTlsResult CTcpClient::DoConnect()
         return SetLastError(tlse_TCP_Address);
 
     // luodaan socket
-    SHOW("  - socket")
+    Show("  - socket");
     m_Socket = socket(AF_INET, SOCK_STREAM, 0);
     if (m_Socket == INVALID_SOCKET)
         return SetLastError(tlse_TCP_socket);
@@ -121,7 +108,7 @@ CTlsResult CTcpClient::DoConnect()
     addr.sin_addr.s_addr = inet_addr(m_Address.c_str());
 
     // yritetään kytkeytyä
-    SHOW("  - connect")
+    Show("  - connect");
     if (connect(m_Socket, (struct sockaddr*)&addr, sizeof(addr)) < 0)
         return SetLastError(tlse_TCP_connect);
 
@@ -133,14 +120,14 @@ void CTcpClient::Disconnect()
 {
     if (m_Socket != INVALID_SOCKET)
     {
-        SHOW("  - closesocket")
+        Show("  - closesocket");
         closesocket(m_Socket);
         m_Socket = INVALID_SOCKET;
     }
 
     if (m_WSAStartupCalled)
     {
-        SHOW("  - WSACleanup")
+        Show("  - WSACleanup");
         WSACleanup();
         m_WSAStartupCalled = false;
     }
@@ -161,6 +148,20 @@ CTlsResult CTcpClient::SetLastError(int errCode, const std::string& msg)
 }
 //----------------------------------------------------------------------------
 
+void CTcpClient::ShowFunc(const std::string& class_, const std::string& func)
+{
+    if (m_DebugStringCb)
+        m_DebugStringCb(std::string(class_) + "::" + std::string(func));
+}
+//----------------------------------------------------------------------------
+
+void CTcpClient::Show(const std::string& text)
+{
+    if (m_DebugStringCb)
+        m_DebugStringCb(text.data());
+}
+//----------------------------------------------------------------------------
+
 
 //***************************************************************************
 //
@@ -170,7 +171,7 @@ CTlsResult CTcpClient::SetLastError(int errCode, const std::string& msg)
 
 COpenSSL_Client::~COpenSSL_Client()
 {
-    SHOWFUNC("COpenSSL_Client")
+    ShowFunc("COpenSSL_Client", __FUNC__);
 
     Shutdown();
     Free();
@@ -207,20 +208,20 @@ CTlsResult COpenSSL_Client::MakeConnection(CTcpClient& tcpClient)
 
 void COpenSSL_Client::Initialize()
 {
-    SHOWFUNC("COpenSSL_Client")
+    ShowFunc("COpenSSL_Client", __FUNC__);
 
-    SHOW("  - SSL_load_error_strings")
+    Show("  - SSL_load_error_strings");
     SSL_load_error_strings();
-    SHOW("  - OpenSSL_add_ssl_algorithms")
+    Show("  - OpenSSL_add_ssl_algorithms");
     OpenSSL_add_ssl_algorithms();
 }
 //----------------------------------------------------------------------------
 
 CTlsResult COpenSSL_Client::CreateContext()
 {
-    SHOWFUNC("COpenSSL_Client")
+    ShowFunc("COpenSSL_Client", __FUNC__);
 
-    SHOW("  - TLS_client_method")
+    Show("  - TLS_client_method");
     m_CTX = SSL_CTX_new(TLS_client_method());
     if (!m_CTX)
         return SetLastError(tlse_SSL_CTX_new);
@@ -231,13 +232,13 @@ CTlsResult COpenSSL_Client::CreateContext()
 
 CTlsResult COpenSSL_Client::SetVersions()
 {
-    SHOWFUNC("COpenSSL_Client")
+    ShowFunc("COpenSSL_Client", __FUNC__);
 
-    SHOW("  - SSL_CTX_set_min_proto_version")
+    Show("  - SSL_CTX_set_min_proto_version");
     if (SSL_CTX_set_min_proto_version(m_CTX, m_TLS_MinVersion) == 0)
         return SetLastError(tlse_SSL_CTX_set_min_proto_version);
 
-    SHOW("  - SSL_CTX_set_max_proto_version")
+    Show("  - SSL_CTX_set_max_proto_version");
     if (SSL_CTX_set_max_proto_version(m_CTX, m_TLS_MaxVersion) == 0)
         return SetLastError(tlse_SSL_CTX_set_max_proto_version);
 
@@ -247,13 +248,13 @@ CTlsResult COpenSSL_Client::SetVersions()
 
 CTlsResult COpenSSL_Client::CreateSSL(int fd)
 {
-    SHOWFUNC("COpenSSL_Client")
+    ShowFunc("COpenSSL_Client", __FUNC__);
 
-    SHOW("  - SSL_new")
+    Show("  - SSL_new");
     m_SSL = SSL_new(m_CTX);
     if (!m_SSL)
         return SetLastError(tlse_SSL_new);
-    SHOW("  - SSL_set_fd")
+    Show("  - SSL_set_fd");
     if (SSL_set_fd(m_SSL, fd) == 0)
         return SetLastError(tlse_SSL_set_fd);
     return CTlsResult();
@@ -262,15 +263,15 @@ CTlsResult COpenSSL_Client::CreateSSL(int fd)
 
 CTlsResult COpenSSL_Client::DisplayCerts()
 {
-    SHOWFUNC("COpenSSL_Client")
+    ShowFunc("COpenSSL_Client", __FUNC__);
 
-    SHOW("  - SSL_get_peer_certificate")
+    Show("  - SSL_get_peer_certificate");
     X509* cert = SSL_get_peer_certificate(m_SSL);
     if (!cert)
         return SetLastError(tlse_SSL_get_peer_certificate);
     CSSLGuard x509Guard(cert);
 
-    SHOW("  - X509_get_subject_name")
+    Show("  - X509_get_subject_name");
     char* subject = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
     if (!subject)
         return SetLastError(tlse_X509_get_subject_name);
@@ -278,7 +279,7 @@ CTlsResult COpenSSL_Client::DisplayCerts()
 
     std::cout << "  = X509_subject_name: " << subject << std::endl;
 
-    SHOW("  - X509_get_issuer_name")
+    Show("  - X509_get_issuer_name");
     char* issuer = X509_NAME_oneline(X509_get_issuer_name(cert), 0, 0);
     if (!issuer)
         return SetLastError(tlse_X509_get_issuer_name);
@@ -292,9 +293,9 @@ CTlsResult COpenSSL_Client::DisplayCerts()
 
 CTlsResult COpenSSL_Client::Connect()
 {
-    SHOWFUNC("COpenSSL_Client")
+    ShowFunc("COpenSSL_Client", __FUNC__);
 
-    SHOW("  - SSL_connect")
+    Show("  - SSL_connect");
     int ret = SSL_connect(m_SSL);
     if (ret > 0)
         return CTlsResult();
@@ -308,11 +309,11 @@ CTlsResult COpenSSL_Client::Connect()
 
 CTlsResult COpenSSL_Client::Shutdown()
 {
-    SHOWFUNC("COpenSSL_Client")
+    ShowFunc("COpenSSL_Client", __FUNC__);
 
     if (m_SSL)
     {
-        SHOW("  - SSL_shutdown")
+        Show("  - SSL_shutdown");
         int status = SSL_shutdown(m_SSL);
 
         if (status <= 0)
@@ -331,18 +332,18 @@ CTlsResult COpenSSL_Client::Shutdown()
 
 void COpenSSL_Client::Free()
 {
-    SHOWFUNC("COpenSSL_Client")
+    ShowFunc("COpenSSL_Client", __FUNC__);
 
     if (m_SSL)
     {
-        SHOW("  - SSL_free")
+        Show("  - SSL_free");
         SSL_free(m_SSL);
         m_SSL = nullptr;
     }
 
     if (m_CTX)
     {
-        SHOW("  - SSL_CTX_free")
+        Show("  - SSL_CTX_free");
         SSL_CTX_free(m_CTX);
         m_CTX = nullptr;
     }
@@ -351,9 +352,9 @@ void COpenSSL_Client::Free()
 
 CTlsResult COpenSSL_Client::LoadVerifyLocations()
 {
-    SHOWFUNC("COpenSSL_Client")
+    ShowFunc("COpenSSL_Client", __FUNC__);
 
-    SHOW("  - SSL_CTX_load_verify_locations")
+    Show("  - SSL_CTX_load_verify_locations");
     if (int r = SSL_CTX_load_verify_locations(
             m_CTX, m_Certificate.c_str(), nullptr); r != 1)
         return SetLastError(tlse_SSL_CTX_load_verify_locations);
@@ -363,12 +364,12 @@ CTlsResult COpenSSL_Client::LoadVerifyLocations()
 
 CTlsResult COpenSSL_Client::VerifyCertification()
 {
-    SHOWFUNC("COpenSSL_Client")
+    ShowFunc("COpenSSL_Client", __FUNC__);
 
-    SHOW("  - SSL_CTX_set_verify")
+    Show("  - SSL_CTX_set_verify");
     SSL_CTX_set_verify(m_CTX, SSL_VERIFY_PEER, nullptr);
 
-    SHOW("  - SSL_get_verify_result")
+    Show("  - SSL_get_verify_result");
     if (int r = SSL_get_verify_result(m_SSL); r != X509_V_OK)
     {
         return SetLastError(
@@ -379,9 +380,9 @@ CTlsResult COpenSSL_Client::VerifyCertification()
 }
 //----------------------------------------------------------------------------
 
-CTlsResult COpenSSL_Client::Write(std::string_view message)
+CTlsResult COpenSSL_Client::Write(const std::string& message)
 {
-    SHOWFUNC("COpenSSL_Client")
+    ShowFunc("COpenSSL_Client", __FUNC__);
 
 //    if (!is_connection_active(m_SSL))
 //    {
@@ -389,7 +390,7 @@ CTlsResult COpenSSL_Client::Write(std::string_view message)
 //        return false;
 //    }
 
-    SHOW("  - SSL_write")
+    Show("  - SSL_write");
     int ret = SSL_write(m_SSL, message.data(), message.size());
     if (ret > 0)
         return CTlsResult();
@@ -406,10 +407,10 @@ CTlsResult COpenSSL_Client::Write(std::string_view message)
 
 int COpenSSL_Client::Read(std::string& message)
 {
-    SHOWFUNC("COpenSSL_Client")
+    ShowFunc("COpenSSL_Client", __FUNC__);
 
     char buffer[1024];
-    SHOW("  - SSL_read")
+    Show("  - SSL_read");
     int bytes = SSL_read(m_SSL, buffer, sizeof(buffer));
     if (bytes <= 0)
         return bytes;
@@ -424,6 +425,20 @@ CTlsResult COpenSSL_Client::SetLastError(
     int errCode, const std::string& msg)
 {
     return CTlsResult(errCode, msg);
+}
+//----------------------------------------------------------------------------
+
+void COpenSSL_Client::ShowFunc(const std::string& class_, const std::string& func)
+{
+    if (m_DebugStringCb)
+        m_DebugStringCb(std::string(class_) + "::" + std::string(func));
+}
+//----------------------------------------------------------------------------
+
+void COpenSSL_Client::Show(const std::string& text)
+{
+    if (m_DebugStringCb)
+        m_DebugStringCb(text);
 }
 //----------------------------------------------------------------------------
 
@@ -483,8 +498,8 @@ void CMessageDeque::Flush()
 //***************************************************************************
 
 CClientReadThread::CClientReadThread(
-    ztls::COpenSSL_Client* client, CNewMessageCb messageCb,
-    CCloseNotifyCb closeCb, CErrorCb errorCb)
+    ztls::COpenSSL_Client* client, CTlsEventCb messageCb, CTlsEventCb closeCb,
+    CTlsErrorCb errorCb)
   : TThread(false)
   , m_Client(client)
   , m_NewMessageCb(messageCb)
@@ -520,7 +535,7 @@ void __fastcall CClientReadThread::Execute()
             else
             {
                 if (m_ErrorCb)
-                    m_ErrorCb(err, errNo);
+                    m_ErrorCb(err, errNo, "CClientReadThread::Execute");
             }
         }
 
@@ -537,32 +552,32 @@ void __fastcall CClientReadThread::Execute()
 //----------------------------------------------------------------------------
 
 
-//***************************************************************************
+////***************************************************************************
+////
+//// class CTlsClientTimer
+//// ----- ---------------
+////***************************************************************************
 //
-// class CTlsClientTimer
-// ----- ---------------
-//***************************************************************************
-
-void CTlsClientTimer::Start(int interval, std::function<void()> task)
-{
-    m_Running = true;
-    m_Worker = std::thread([=]() {
-      while (m_Running) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-        if (m_Running)
-            task();
-      }
-    });
-}
-//----------------------------------------------------------------------------
-
-void CTlsClientTimer::Stop()
-{
-    m_Running = false;
-    if (m_Worker.joinable())
-        m_Worker.join();
-}
-//----------------------------------------------------------------------------
+//void CTlsClientTimer::Start(int interval, std::function<void()> task)
+//{
+//    m_Running = true;
+//    m_Worker = std::thread([=]() {
+//      while (m_Running) {
+//        std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+//        if (m_Running)
+//            task();
+//      }
+//    });
+//}
+////----------------------------------------------------------------------------
+//
+//void CTlsClientTimer::Stop()
+//{
+//    m_Running = false;
+//    if (m_Worker.joinable())
+//        m_Worker.join();
+//}
+////----------------------------------------------------------------------------
 
 
 //***************************************************************************
@@ -582,10 +597,12 @@ CTlsResult CTlsClient::Connect()
     using namespace ztls;
 
     m_TcpClient = std::make_unique<ztls::CTcpClient>(m_Address, m_PortNo);
+    m_TcpClient->SetDebugStringCallback(OnDebugString);
 
     m_SslClient = std::make_unique<ztls::COpenSSL_Client>();
     m_SslClient->SetCertificate(m_Certificate);
     m_SslClient->SetMinVersion(m_TLS_MinVersion);
+    m_SslClient->SetDebugStringCallback(OnDebugString);
 
     if (CTlsResult r = m_TcpClient->Connect(); !r)
         return r;
@@ -618,9 +635,10 @@ CTlsResult CTlsClient::Connect()
     m_ReadThread = std::make_unique<CClientReadThread>(
         m_SslClient.get(), OnNewMessage, OnCloseNotify, OnError);
 
-    m_Timer.Start(1000, Timer);
-
     m_Connected = true;
+
+    if (m_ConnectedCb)
+        m_ConnectedCb();
 
     return CTlsResult();
 }
@@ -628,8 +646,6 @@ CTlsResult CTlsClient::Connect()
 
 CTlsResult CTlsClient::Disconnect()
 {
-    m_Timer.Stop();
-
     if (!m_Connected)
         return CTlsResult();
 
@@ -650,6 +666,9 @@ CTlsResult CTlsClient::Disconnect()
 
     m_Connected = false;
 
+    if (m_DisconnectedCb)
+        m_DisconnectedCb();
+
     return CTlsResult();
 }
 //----------------------------------------------------------------------------
@@ -660,8 +679,8 @@ CTlsResult CTlsClient::Write(const std::string& message)
     {
         int errNo = WSAGetLastError();
 
-        std::string e = "*** WriteError: " + std::to_string(errNo);
-        SHOW(e.c_str());
+//        std::string e = "*** WriteError: " + std::to_string(errNo);
+//        SHOW(e.c_str());
 
 //        if (errNo == WSAECONNRESET)  // 10054
 //        {
@@ -680,25 +699,25 @@ CTlsResult CTlsClient::Write(const std::string& message)
 }
 //----------------------------------------------------------------------------
 
-void CTlsClient::Timer()
-{
-    if (std::exchange(m_IsError, false))
-    {
-        Disconnect();
-        m_RetryConnect = true;
-    }
-
-    else if (std::exchange(m_CloseNotified, false))
-    {
-        Disconnect();
-    }
-
-    else if (std::exchange(m_RetryConnect, false))
-    {
-        Connect();
-    }
-}
-//----------------------------------------------------------------------------
+//void CTlsClient::Timer()
+//{
+//    if (std::exchange(m_IsError, false))
+//    {
+//        Disconnect();
+//        m_RetryConnect = true;
+//    }
+//
+//    else if (std::exchange(m_CloseNotified, false))
+//    {
+//        Disconnect();
+//    }
+//
+//    else if (std::exchange(m_RetryConnect, false))
+//    {
+//        Connect();
+//    }
+//}
+////----------------------------------------------------------------------------
 
 void CTlsClient::OnNewMessage()
 {
@@ -720,29 +739,42 @@ void CTlsClient::OnCloseNotify()
 }
 //----------------------------------------------------------------------------
 
-void CTlsClient::OnError(int errType, int errNo)
+void CTlsClient::OnError(int errType, int errNo, const std::string& source)
 {
     if (errType == SSL_ERROR_SYSCALL)
     {
-        SHOW("*** ReadError: SSL_ERROR_SYSCALL")
+        DebugString("*** SSL_ERROR_SYSCALL");
     }
     else if (errType == SSL_ERROR_WANT_READ)
     {
-        SHOW("*** ReadError: SSL_ERROR_WANT_READ")
+        DebugString("*** SSL_ERROR_WANT_READ");
     }
     else if (errType == SSL_ERROR_WANT_WRITE)
     {
-        SHOW("*** ReadError: SSL_ERROR_WANT_WRITE")
+        DebugString("*** SSL_ERROR_WANT_WRITE");
     }
     else
     {
-        SHOW("*** ReadError: OTHER")
+        DebugString("*** OTHER");
     }
 
     m_IsError = true;
 
     if (m_ErrorCb)
-        m_ErrorCb(errType, errNo);
+        m_ErrorCb(errType, errNo, source);
+}
+//----------------------------------------------------------------------------
+
+void CTlsClient::OnDebugString(const std::string& s)
+{
+    DebugString(s);
+}
+//----------------------------------------------------------------------------
+
+void CTlsClient::DebugString(const std::string& s)
+{
+    if (m_DebugStringCb)
+        m_DebugStringCb(s);
 }
 //----------------------------------------------------------------------------
 

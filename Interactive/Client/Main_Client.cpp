@@ -25,6 +25,9 @@ const char* ADDRESS = "127.0.0.1";
 
 const char* CERTIFICATE = "certs/hedsam.crt";
 
+const int MAXINTERVAL = 15000;
+const int INTERVAL_FACT = 250;
+
 
 #ifdef CONSOLE
 
@@ -142,14 +145,14 @@ const char* CERTIFICATE = "certs/hedsam.crt";
 __fastcall TformMain::TformMain(TComponent* Owner)
   : TForm(Owner)
 {
-    g_MemoWriter.Func = MemoWriter;
-    g_MemoWriter.This = this;
-
     m_TlsClient = std::make_unique<ztls::CTlsClient>(
         AnsiString(edAddress->Text).c_str(), udPort->Position, CERTIFICATE);
+    m_TlsClient->SetConnectedCallback(OnConnected);
+    m_TlsClient->SetDisconnectedCallback(OnDisconnected);
     m_TlsClient->SetNewMessageCallback(OnNewMessage);
     m_TlsClient->SetCloseNotifyCallback(OnCloseNotify);
     m_TlsClient->SetErrorCallback(OnError);
+    m_TlsClient->SetDebugStringCallback(OnDebugString);
 
 //    m_TcpClient = std::make_unique<ztls::CTcpClient>(ADDRESS, PORTNO);
 //
@@ -160,7 +163,7 @@ __fastcall TformMain::TformMain(TComponent* Owner)
 
 __fastcall TformMain::~TformMain()
 {
-//    Disconnect();
+    Disconnect();
 }
 //----------------------------------------------------------------------------
 
@@ -178,33 +181,49 @@ void __fastcall TformMain::butSendClick(TObject *Sender)
     if (!m_Connected)
         return;
 
-    if (ztls::CTlsResult r = m_TlsClient->Write("Hello from the client!\n\r"); !r)
+    memo->Lines->Add("### Send");
+    if (ztls::CTlsResult r =
+            m_TlsClient->Write("Hello from the client!\n\r"); !r)
     {
         ShowError(r);
-        Disconnect();
+        m_Status.Error = true;
     }
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TformMain::timerTimer(TObject *Sender)
 {
-    if (!m_Connected)
-        return;
+//    if (!m_Connected)
+//        return;
 
-    if (std::exchange(m_IsError, false))
+    if (std::exchange(m_Status.Error, false))
     {
         memo->Lines->Add("### Error");
-        Disconnect();
+        Disconnect(false);
+        m_Status.TryConnect = true;
+    }
+
+    else if (std::exchange(m_Status.CloseNotified, false))
+    {
+        memo->Lines->Add("### Close notified");
+        Disconnect(false);
+        m_Status.TryConnect = true;
+    }
+
+    else if (std::exchange(m_Status.TryConnect, false))
+    {
+        ++m_TryCounter;
+
+        int interval = timer->Interval + (INTERVAL_FACT * m_TryCounter);
+        interval = std::min(MAXINTERVAL, interval);
+
+        memo->Lines->Add("### TryConnect (" + AnsiString(m_TryCounter)
+          + "," + AnsiString(interval) + "s)");
+        timer->Interval = interval;
         Connect();
     }
 
-    else if (std::exchange(m_CloseNotified, false))
-    {
-        memo->Lines->Add("### Close notified");
-//        Disconnect();
-    }
-
-    else if (std::exchange(m_NewMessage, false))
+    else if (m_Connected && std::exchange(m_Status.NewMessage, false))
     {
         if (!m_TlsClient->HasMessages())
             return;
@@ -223,17 +242,30 @@ bool __fastcall TformMain::Connect()
 {
     using namespace ztls;
 
+    if (m_Connected)
+        return true;
+
+    memo->Lines->Add("### Connect");
+
     m_TlsClient->SetAddress(AnsiString(edAddress->Text).c_str());
     m_TlsClient->SetPortNo(udPort->Position);
 
     m_TlsClient->SetReadTimeout(5000);
 
+    timer->Enabled = true;
+
     if (CTlsResult r = m_TlsClient->Connect(); !r)
+    {
+        m_Status.TryConnect = true;
         return ShowError(r);
+    }
 
     m_TlsClient->Write("\n\rHalloota!\n\r");
 
     timer->Enabled = true;
+
+    m_TryCounter = 0;
+    m_Status.TryConnect = false;
 
     m_Connected = true;
     butConnect->Caption = "Disconnect";
@@ -242,7 +274,7 @@ bool __fastcall TformMain::Connect()
 }
 //----------------------------------------------------------------------------
 
-void __fastcall TformMain::Disconnect()
+void __fastcall TformMain::Disconnect(bool disableTimer)
 {
     using namespace ztls;
 
@@ -251,10 +283,13 @@ void __fastcall TformMain::Disconnect()
 
     memo->Lines->Add("### Disconnect");
 
-//    if (CTlsResult r = m_TlsClient->Disconnect(); !r)
-//        ;
+    if (CTlsResult r = m_TlsClient->Disconnect(); !r)
+        ;
 
-    timer->Enabled = false;
+    if (disableTimer)
+        timer->Enabled = false;
+
+    m_Status.TryConnect = false;
 
     m_Connected = false;
     butConnect->Caption = "Connect";
@@ -269,34 +304,64 @@ bool __fastcall TformMain::ShowError(const ztls::CTlsResult& result)
 }
 //----------------------------------------------------------------------------
 
+void TformMain::OnConnected()
+{
+    TThread::Queue(nullptr, [this]()
+    {
+        memo->Lines->Add("### Connected");
+    });
+
+    m_Status.Connected = true;
+}
+//----------------------------------------------------------------------------
+
+void TformMain::OnDisconnected()
+{
+    TThread::Queue(nullptr, [this]()
+    {
+        memo->Lines->Add("### Disconnected");
+    });
+
+    m_Status.Disconnected = true;
+}
+//----------------------------------------------------------------------------
+
 void TformMain::OnNewMessage()
 {
-    m_NewMessage = true;
+    m_Status.NewMessage = true;
 }
 //----------------------------------------------------------------------------
 
 void TformMain::OnCloseNotify()
 {
-    m_CloseNotified = true;
+    m_Status.CloseNotified = true;
 }
 //----------------------------------------------------------------------------
 
-void TformMain::OnError(int errType, int errNo)
+void TformMain::OnError(int errType, int errNo, const std::string& source)
 {
     std::string e =
-        "*** " + std::to_string(errType) + ":" + std::to_string(errNo);
-    memo->Lines->Add(e.c_str());
+        "*** " + std::to_string(errType) + ":" + std::to_string(errNo) +
+        " --- " + source;
+    TThread::Queue(nullptr, [this, e]()
+    {
+        memo->Lines->Add(e.c_str());
+    });
 
     if (errType == SSL_ERROR_SYSCALL)
     {
-        m_IsError = true;
+        m_Status.Error = true;
     }
 }
 //----------------------------------------------------------------------------
 
-void TformMain::MemoWriter(void* _this, const std::string& text)
+void TformMain::OnDebugString(const std::string& s)
 {
-    reinterpret_cast<TformMain*>(_this)->memo->Lines->Add(text.c_str());
+    TThread::Queue(nullptr, [this, s]()
+    {
+        AnsiString S = s.data();
+        memo->Lines->Add(S);
+    });
 }
 //----------------------------------------------------------------------------
 
