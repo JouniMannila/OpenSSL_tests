@@ -80,7 +80,7 @@ object formMain: TformMain
       Height = 23
       Anchors = [akTop, akRight]
       TabOrder = 2
-      Text = '172.20.221.88'
+      Text = '172.20.221.98'
     end
     object edPort: TEdit
       Left = 532
